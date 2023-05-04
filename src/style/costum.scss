@@ -4,18 +4,35 @@
   padding: 0;
 }
 
+.app {
+  position: relative;
+}
+
 .start-page {
+  position: absolute;
   height: 100vh;
   width: 100vw;
   background-color: #0F8A69;
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 10;
+  transition: 1s;
+  bottom: 0;
+  
+  &.slide {
+    bottom: 100vh;
+  }
 
   .text-container {
     font-size: 190px;
     color: #ffffff;
     font-weight: bold;
+  }
+
+  @keyframes slide {
+    from { bottom: 0; }
+    to { bottom: 100vh; }
   }
 }
 
@@ -64,9 +81,41 @@
     }
 
     .quicks-icon {
+      z-index: 3;
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      transform: translate(-50%, -50%);
+      animation: ease-in-out;
+
+      &.inbox, &.task {
+        right: 15px;
+        background-color: #000;
+      }
+    }
+
+    .inbox-icon {
+      z-index: 2;
       position: absolute;
       bottom: 10px;
       right: 10px;
+      animation: ease-in-out;
+
+      &.open {
+        right: 60px;
+      }
+    }
+
+    .task-icon {
+      z-index: 2;
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      animation: ease-in-out;
+
+      &.open {
+        right: 110px;
+      }
     }
   }
 }
