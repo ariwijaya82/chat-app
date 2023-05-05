@@ -75,12 +75,43 @@
       }
     }
 
+    .icon-title {
+      color: #fff;
+      position: absolute;
+      display: inline-block;
+      transform: translate(50%, 50%);
+      bottom: 100px;
+      right: 50px;
+      opacity: 0;
+      transition: 0.5s;
+
+      &.open {
+        opacity: 1;
+
+        &.inbox {
+          right: 132px;
+        }
+
+        &.task {
+          right: 212px;
+        }
+      }
+    }
+
     .quicks-icon {
       z-index: 3;
       position: absolute;
       bottom: 50px;
       right: 50px;
       transform: translate(50%, 50%);
+      transition: ease 1s;
+      display: inline-block;
+      opacity: 1;
+
+      &.inbox, &.task {
+        opacity: 0;
+        z-index: 0;
+      }
     }
 
     .inbox-icon {
@@ -91,7 +122,7 @@
       transform: translate(50%, 50%);
       transition: 0.5s;
 
-      &.open {
+      &.open, &.task {
         right: 132px;
       }
     }
@@ -102,10 +133,14 @@
       bottom: 50px;
       right: 50px;
       transform: translate(50%, 50%);
-      transition: 1s;
+      transition: 0.5s;
 
       &.open {
         right: 212px;
+      }
+
+      &.inbox {
+        right: 132px;
       }
     }
   }

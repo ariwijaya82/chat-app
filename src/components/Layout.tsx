@@ -9,7 +9,10 @@ export default function Layout() {
   const [quiks, setQuiks] = React.useState<'close' | 'open' | 'inbox' | 'task'>('close');
 
   return (
-    <div className="layout-page">
+    <div className="layout-page" onClick={() => {
+      if (quiks === 'inbox' || quiks === 'task') setQuiks('open');
+      else if (quiks === 'open') setQuiks('close');
+    }}>
       <div className="sidebar"></div>
       <div className="content">
         <div className="searchbar">
@@ -20,22 +23,30 @@ export default function Layout() {
           className={`quicks-icon ${quiks}`}
           src={QuicksIcon}
           alt="quicks-icon"
-          onClick={() => {
-            console.log('click');
+          onClick={(e) => {
+            e.stopPropagation();
             setQuiks(quiks === 'open' ? 'close' : 'open')
           }}
         />
+        <p className={`icon-title inbox ${quiks}`}>Inbox</p>
         <img
           className={`inbox-icon ${quiks}`}
           src={InboxIcon}
           alt="inbox-icon"
-          onClick={() => setQuiks('inbox')}
+          onClick={(e) => {
+            e.stopPropagation();
+            setQuiks('inbox')
+          }}
         />
+        <p className={`icon-title task ${quiks}`}>Task</p>
         <img
           className={`task-icon ${quiks}`}
           src={TaskIcon}
           alt="task-icon"
-          onClick={() => setQuiks('task')}
+          onClick={(e) => {
+            e.stopPropagation();
+            setQuiks('task')
+          }}
         />
       </div>
     </div>
