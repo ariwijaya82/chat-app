@@ -145,3 +145,24 @@
     }
   }
 }
+
+.container {
+  height: 737px;
+  width: 734px;
+  position: absolute;
+  bottom: 80px;
+  right: 20px;
+  background-color: #fff;
+  border-radius: 5px;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .circle {
+    
+  }
+}
