@@ -1,0 +1,52 @@
+#VRML_SIM R2023a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/objects/balls/protos/Ball.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/robots/robotis/darwin-op/protos/RobotisOp2.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/robots/robotis/darwin-op/protos/RobotisJersey.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023a/projects/samples/contests/robocup/protos/RobocupSoccerField.proto"
+
+WorldInfo {
+  info [
+    "ROBOTIS OP2 robot."
+    "The ROBOTIS OP2 robot simulation model can be programmed using the ROBOTIS OP2 motions files and the ROBOTIS OP2 walk control library."
+  ]
+  title "ROBOTIS OP2"
+  basicTimeStep 16
+}
+Viewpoint {
+  orientation 0.05237979537479935 -0.32380516711602014 -0.9446727321064478 5.943946209799386
+  position -2.5958477514155547 -0.9891397613715206 0.6000588784404605
+  follow "myRobot"
+}
+TexturedBackground {
+  texture "noon_cloudy_countryside"
+  luminosity 1.5
+}
+TexturedBackgroundLight {
+  texture "noon_cloudy_countryside"
+  luminosity 0.5
+}
+DEF BALL Ball {
+  translation 0 0 0.03
+  rotation 1 0 0 1.5707963267948966
+}
+DEF ROBOTISOP2 RobotisOp2 {
+  hidden rotation_11 0.577416935850641 0.5773169329722022 0.5773169329721989 2.094400000054683
+  hidden rotation_16 0.5696587095830455 0.5811578763968468 0.5811578763968417 2.106000000304687
+  translation -0.36 0 0.236
+  rotation 0 1 0 0.09
+  name "myRobot"
+  controller "custom_walk"
+  jersey RobotisJersey {
+  }
+  bodySlot [
+    GPS {
+    }
+  ]
+}
+RobocupSoccerField {
+  size "kid"
+  turfPhysics FALSE
+}
