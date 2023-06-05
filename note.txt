@@ -1,2 +1,2 @@
 - topic TA about "bezier curve for path planning"
-- title "Navigation for Homanoid Robot Soccer Based on Bazier Curve and Fuzzy Logic"
+- title "Navigation for Homanoid Robot Soccer Based on Bazier Curve and PID Controller"
