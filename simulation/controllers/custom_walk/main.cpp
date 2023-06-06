@@ -10,6 +10,10 @@
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
 
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QLabel>
+#include <QtCore/QString>
+
 #include <cmath>
 #include <cstdlib>
 #include <string>
@@ -30,70 +34,127 @@ static const char *motorNames[20] = {
   "AnkleL" /*ID16*/,    "FootR" /*ID17*/,     "FootL" /*ID18*/,     "Neck" /*ID19*/,      "Head" /*ID20*/
 };
 
-class Walk : public Robot {
-    public:
-        Walk();
-        void run();
-        void checkIfFallen();
+void wait(int ms);
+void checkIfFallen();
+void readPath(vector<double> &x_path, vector<double> &y_path);
+double getDirection(double x, double y);
+int smoothValue(double value, double min_input, double max_input, double min_output, double max_output);
 
-    private:
-        int mTime;
+QApplication *app;
+QLabel *sensorValueLabel;
 
-        void myStep();
-        void wait(int ms);
+webots::Robot *robot;
+int timeStep;
+Accelerometer *accelerometer;
+Gyro *gyro;
+GPS *gps;
+Compass *compass;
+Keyboard *keyboard;
+PositionSensor *positionSensors[20];
 
-        PositionSensor *mPositionSensors[20];
-        Accelerometer *mAccelerometer;
-        Gyro *mGyro;
-        Keyboard *mKeyboard;
-        GPS *mGPS;
-        Compass *mCompass;
+RobotisOp2MotionManager *motionManager;
+RobotisOp2GaitManager *gaitManager;
 
-        RobotisOp2MotionManager *mMotionManager;
-        RobotisOp2GaitManager *mGaitManager;
-};
+int main(int argc, char** argv) {
+    app = new QApplication(argc, argv);
+    sensorValueLabel = new QLabel();
+    sensorValueLabel->show();
+    QString sensorValueText = "Sensor Value: 123";
+    sensorValueLabel->setText(sensorValueText);
 
-// initial
-Walk::Walk() : Robot() {
-    mTime = getBasicTimeStep();
-    mAccelerometer = getAccelerometer("Accelerometer");
-    mAccelerometer->enable(mTime);
-    mGyro = getGyro("Gyro");
-    mGyro->enable(mTime);
-    mKeyboard = getKeyboard();
-    mKeyboard->enable(mTime);
-    mGPS = getGPS("gps");
-    mGPS->enable(mTime);
-    mCompass = getCompass("compass");
-    mCompass->enable(mTime);
+    robot = new webots::Robot();
+
+    timeStep = robot->getBasicTimeStep();
+    accelerometer = robot->getAccelerometer("Accelerometer");
+    gyro = robot->getGyro("Gyro");
+    gps = robot->getGPS("gps");
+    compass = robot->getCompass("compass");
+    keyboard = robot->getKeyboard();
     for (int i = 0; i < 20; i++) {
         string sensorName = motorNames[i];
         sensorName.push_back('S');
-        mPositionSensors[i] = getPositionSensor(sensorName);
-        mPositionSensors[i]->enable(mTime);
+        positionSensors[i] = robot->getPositionSensor(sensorName);
+        positionSensors[i]->enable(timeStep);
+    }
+    accelerometer->enable(timeStep);
+    gyro->enable(timeStep);
+    gps->enable(timeStep);
+    compass->enable(timeStep);
+    keyboard->enable(timeStep);
+
+    motionManager = new RobotisOp2MotionManager(robot);
+    gaitManager = new RobotisOp2GaitManager(robot, "config.ini");
+
+    cout << "Custom Walking" << endl;
+    cout << "==============" << endl;
+
+    robot->step(timeStep);
+    motionManager->playPage(9);
+    wait(200);
+    bool isWalking = false; 
+    int key = 0;
+
+    while(true) {
+      checkIfFallen();
+
+      gaitManager->setXAmplitude(10.0);
+
+      while ((key = keyboard->getKey()) >= 0) {
+        if (key == ' ') {
+          if (isWalking) {
+            gaitManager->stop();
+            isWalking = false;
+            cout << "stop walking" << endl;
+            wait(200);
+          } else {
+            gaitManager->start();
+            isWalking = true;
+            cout << "start walking" << endl;
+            wait(200);
+          }
+        }
+      }
+
+      gaitManager->step(timeStep);
+      robot->step(timeStep);
     }
 
-    mMotionManager = new RobotisOp2MotionManager(this);
-    mGaitManager = new RobotisOp2GaitManager(this, "config.ini");
+    return 0;
 }
 
-void Walk::myStep() {
-    int ret = step(mTime);
-    if (ret == -1) exit(EXIT_SUCCESS);
-}
-
-void Walk::wait(int ms) {
-    double startTime = getTime();
+void wait(int ms) {
+    double startTime = robot->getTime();
     double s = (double)ms / 1000.0;
-    while(s + startTime >= getTime())
-        myStep();
+    while(s + startTime >= robot->getTime())
+        robot->step(timeStep);
 }
 
-// calculation
-double get_direction_in_degrees(double x, double y) {
-  double rad = atan2(x, y);
-  rad *= 180.0/M_PI;
-  return rad;
+void checkIfFallen() {
+  static int fup = 0;
+  static int fdown = 0;
+  static const double acc_tolerance = 80.0;
+  static const double acc_step = 100;
+
+  const double *acc = accelerometer->getValues();
+  if (acc[1] < 512.0 - acc_tolerance)
+    fup++;
+  else
+    fup = 0;
+
+  if (acc[1] > 512.0 + acc_tolerance)
+    fdown++;
+  else
+    fdown = 0;
+
+  if (fup > acc_step) {
+    motionManager->playPage(10);  // f_up
+    motionManager->playPage(9);   // init position
+    fup = 0;
+  } else if (fdown > acc_step) {
+    motionManager->playPage(11);  // b_up
+    motionManager->playPage(9);   // init position
+    fdown = 0;
+  }
 }
 
 void readPath(vector<double> &x_path, vector<double> &y_path) {
@@ -111,6 +172,12 @@ void readPath(vector<double> &x_path, vector<double> &y_path) {
   }
 }
 
+double getDirection(double x, double y) {
+  double rad = atan2(x, y);
+  rad *= 180.0/M_PI;
+  return rad;
+}
+
 int smoothValue(double value, double min_input, double max_input, double min_output, double max_output) {
   double clamp_value = value;
   if (value < min_input) clamp_value = min_input;
@@ -118,144 +185,4 @@ int smoothValue(double value, double min_input, double max_input, double min_out
   cout << "clamp: " << clamp_value*(max_output-min_output)/(max_input-min_input) << endl
        << "min output" << min_output << endl; 
   return min_output + (clamp_value-min_input)*(max_output-min_output)/(max_input-min_input);
-}
-
-void Walk::run() {
-  cout << "-------Walk ROBOTIS OP2-------" << endl;
-  cout << "Control with keyboard" << endl;
-
-  // First step to update sensors values
-  myStep();
-
-  // play the hello motion
-  mMotionManager->playPage(9);  // init position
-  wait(200);
-
-  // main loop
-  bool isWalking = false;
-  const double radius_range = 0.1;
-  double x_diff, y_diff, radius= 0.0;
-  int index = 0;
-  vector<double> x_path, y_path;
-
-  while (true) {
-    checkIfFallen();
-
-    mGaitManager->setXAmplitude(0.0);
-    mGaitManager->setAAmplitude(0.0);
-
-    // get keyboard key
-    int key = 0;
-    while ((key = mKeyboard->getKey()) >= 0) {
-      switch (key) {
-        case ' ':  // Space bar
-          readPath(x_path, y_path);
-          cout << x_path.size() << endl;
-          if (isWalking) {
-            mGaitManager->stop();
-            isWalking = false;
-            cout << "stop walking" << endl;
-            wait(200);
-          } else {
-            mGaitManager->start();
-            isWalking = true;
-            cout << "start walking" << endl;
-            wait(200);
-          }
-          break;
-        case Keyboard::UP:
-          mGaitManager->setXAmplitude(10.0);
-          break;
-        case Keyboard::DOWN:
-          mGaitManager->setXAmplitude(0.0);
-          break;
-        case Keyboard::RIGHT:
-          mGaitManager->setAAmplitude(-0.5);
-          break;
-        case Keyboard::LEFT:
-          mGaitManager->setAAmplitude(0.5);
-          break;
-      }
-    }
-
-    if (isWalking) {
-      while (radius < radius_range) {
-        index++;
-        x_diff = x_path[index] - mGPS->getValues()[0];
-        y_diff = y_path[index] - mGPS->getValues()[1];
-        radius = sqrt(x_diff*x_diff + y_diff*y_diff);
-      }
-      x_diff = x_path[index] - mGPS->getValues()[0];
-      y_diff = y_path[index] - mGPS->getValues()[1];
-      radius = sqrt(x_diff*x_diff + y_diff*y_diff);
-      
-      cout << "index: " << index << endl;
-      // cout << "x_tar: " << x_path[index]
-      //      << ", y_tar: " << y_path[index]
-      //      << ", x_curr: " << mGPS->getValues()[0]
-      //      << ", y_curr: " << mGPS->getValues()[1]
-      //      << ", x_diff: " << x_diff
-      //      << ", y_diff: " << y_diff << endl;
-
-      double target_dir = get_direction_in_degrees(x_diff, y_diff);
-      double curr_dir = get_direction_in_degrees(mCompass->getValues()[1], mCompass->getValues()[0])-90.0;
-      double diff_dir = target_dir - curr_dir;
-      cout << "target dir: " << target_dir << endl
-           << "current dir: " << curr_dir << endl
-           << "diff dir " << diff_dir << endl;
-      // if (diff_dir > 180.0) diff_dir -= 360.0;
-      // if (diff_dir < -180.0) diff_dir += 360.0;
-
-      double x_vel = smoothValue(abs(diff_dir), 0, 45, 30, 0);
-      double a_vel = smoothValue(diff_dir, -20, 20, -20, 20);
-      cout << "x: " << x_vel << endl;
-      cout << "a: " << a_vel << endl;
-      mGaitManager->setXAmplitude(x_vel);
-      mGaitManager->setAAmplitude(a_vel);
-      // return;
-    }
-
-    mGaitManager->step(mTime);
-    myStep();
-  }
-}
-
-void Walk::checkIfFallen() {
-  static int fup = 0;
-  static int fdown = 0;
-  static const double acc_tolerance = 80.0;
-  static const double acc_step = 100;
-
-  // count how many steps the accelerometer
-  // says that the robot is down
-  const double *acc = mAccelerometer->getValues();
-  if (acc[1] < 512.0 - acc_tolerance)
-    fup++;
-  else
-    fup = 0;
-
-  if (acc[1] > 512.0 + acc_tolerance)
-    fdown++;
-  else
-    fdown = 0;
-
-  // the robot face is down
-  if (fup > acc_step) {
-    mMotionManager->playPage(10);  // f_up
-    mMotionManager->playPage(9);   // init position
-    fup = 0;
-  }
-  // the back face is down
-  else if (fdown > acc_step) {
-    mMotionManager->playPage(11);  // b_up
-    mMotionManager->playPage(9);   // init position
-    fdown = 0;
-  }
-}
-
-int main() {
-    Walk *walk = new Walk();
-    walk->run();
-    delete walk;
-    return EXIT_FAILURE;
 }

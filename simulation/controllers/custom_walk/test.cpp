@@ -1,11 +1,12 @@
-#include <cmath>
-#include <iostream>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QLabel>
 
-using namespace std;
+int main(int argc, char** argv) {
+    QApplication app(argc, argv);
 
-int main() {
-    cout << atan2(1,1)*180.0/M_PI << endl;
-    cout << atan2(-1,1)*180.0/M_PI << endl;
-    cout << atan2(1,-1)*180.0/M_PI << endl;
-    cout << atan2(-1,-1)*180.0/M_PI << endl;
+    QLabel label("Hello, Qt!");
+    label.show();
+
+    return app.exec();
+    
 }

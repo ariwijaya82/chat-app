@@ -17,7 +17,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation 0.01369019800880513 0.9995168837628602 -0.027903002552783513 0.9124312933870269
-  position -12.610526151107257 0.715675101102171 16.168476096048963
+  position -6.438853148463441 -2.6072802511054602 3.8851764929790593
   follow "myRobot"
 }
 TexturedBackground {
@@ -36,7 +36,8 @@ DEF ROBOTISOP2 RobotisOp2 {
   translation -4 -2.5 0.236
   rotation 9.589809995798671e-09 -0.9999999995618964 2.9600799987031783e-05 -0.08999530717958582
   name "myRobot"
-  controller "custom_walk"
+  controller "<extern>"
+  window "<none>"
   jersey RobotisJersey {
   }
   bodySlot [
