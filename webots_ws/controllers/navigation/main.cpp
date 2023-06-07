@@ -40,7 +40,8 @@ void wait(int ms);
 void checkIfFallen();
 void readPath(vector<double> &x_path, vector<double> &y_path);
 double getDirection(double x, double y);
-int smoothValue(double value, double min_input, double max_input, double min_output, double max_output);
+double rotate90Degree(double value);
+double smoothValue(double value, double min_input, double max_input, double min_output, double max_output);
 
 webots::Robot *robot;
 int timeStep;
@@ -96,6 +97,9 @@ int main(int argc, char** argv) {
       plot.addDataPath(x_path[i]*100, y_path[i]*100);
     }
 
+    const double range = 40.0;
+    int index = 0;
+
     bool isWalking = false; 
     int key = 0;
     while(true) {
@@ -104,39 +108,79 @@ int main(int argc, char** argv) {
       gaitManager->setXAmplitude(0.0);
       gaitManager->setAAmplitude(0.0);
 
+      if (!isWalking) {
+          gaitManager->start();
+          isWalking = true;
+          wait(200);
+      }
+
       while ((key = keyboard->getKey()) >= 0) {
-        if (key == ' ') {
-          if (isWalking) {
-            gaitManager->stop();
-            isWalking = false;
-            cout << "stop walking" << endl;
-            wait(200);
-          } else {
-            gaitManager->start();
-            isWalking = true;
-            cout << "start walking" << endl;
-            wait(200);
-          }
-        }
-        else if (key == Keyboard::UP)
-          gaitManager->setXAmplitude(30.0);
-        else if (key == Keyboard::DOWN)
-          gaitManager->setXAmplitude(-20.0);
-        else if (key == Keyboard::RIGHT)
-          gaitManager->setAAmplitude(-5.0);
-        else if (key == Keyboard::LEFT)
-          gaitManager->setAAmplitude(5.0);
+        // if (key == ' ') {
+        //   if (isWalking) {
+        //     gaitManager->stop();
+        //     isWalking = false;
+        //     cout << "stop walking" << endl;
+        //     wait(200);
+        //   } else {
+        //     gaitManager->start();
+        //     isWalking = true;
+        //     cout << "start walking" << endl;
+        //     wait(200);
+        //   }
+        // }
+        // else if (key == Keyboard::UP)
+        //   gaitManager->setXAmplitude(30.0);
+        // else if (key == Keyboard::DOWN)
+        //   gaitManager->setXAmplitude(-20.0);
+        // else if (key == Keyboard::RIGHT)
+        //   gaitManager->setAAmplitude(-5.0);
+        // else if (key == Keyboard::LEFT)
+        //   gaitManager->setAAmplitude(5.0);
       }
 
       if (isWalking) {
         int x = gps->getValues()[0]*100;
         int y = gps->getValues()[1]*100;
+        int x_target = x_path[index]*100;
+        int y_target = y_path[index]*100;
         plot.addDataPosition(x, y);
 
         int dir = getDirection(compass->getValues()[0], compass->getValues()[1]);
-        cout << "x: " << compass->getValues()[0] << ", y: " << compass->getValues()[1] << ", z: " << compass->getValues()[2] << endl;
-        cout << "dir: " << dir << endl;
+        dir = rotate90Degree(dir);
+        // cout << "x: " << compass->getValues()[0] << ", y: " << compass->getValues()[1] << ", z: " << compass->getValues()[2] << endl;
+        // cout << "dir: " << dir << endl;
         plot.setDirection(dir*M_PI/180.0);
+
+        double distance = sqrt(pow(x-x_target, 2) + pow(y-y_target, 2));
+        // cout << "index: " << index << ", distance: " << distance << endl;
+        int next_index = 0;
+        while (distance < range && index + next_index < x_path.size()) {
+          int next_x = x_path[index+next_index]*100;
+          int next_y = y_path[index+next_index]*100;
+          distance = sqrt(pow(x-next_x, 2) + pow(y-next_y, 2));
+          next_index++;
+        }
+        index += next_index;
+
+        if (index == x_path.size()) {
+          gaitManager->stop();
+          isWalking = false;
+          wait(200);
+        }
+
+        plot.setTarget(x_target, y_target);
+        int target_dir = getDirection(x_target-x, y-y_target);
+        plot.setTargetDir(target_dir*M_PI/180.0);
+        int delta_dir = target_dir - dir;
+
+        double x_speed = smoothValue(abs(delta_dir), 0, 60, 80, 0);
+        double a_speed = smoothValue(delta_dir, -60, 60, 2, -2);
+
+        // cout << "delta_dir: " << delta_dir << endl;
+        cout << "x_speed: " << x_speed << ", a_speed: " << a_speed << endl;
+
+        gaitManager->setXAmplitude(x_speed);
+        gaitManager->setAAmplitude(a_speed);
       }
 
       app.processEvents();
@@ -198,17 +242,19 @@ void readPath(vector<double> &x_path, vector<double> &y_path) {
 }
 
 double getDirection(double x, double y) {
-  double deg = atan2(y, x) * 180.0/M_PI;
-  deg -= 90.0;
-  if (deg < -180.0) deg += 360.0; 
+  double deg = atan2(y, x) * 180.0/M_PI; 
   return deg;
 }
 
-int smoothValue(double value, double min_input, double max_input, double min_output, double max_output) {
+double rotate90Degree(double value) {
+  double deg = value - 90.0;
+  if (deg < -180.0) deg += 360.0;
+  return deg;
+}
+
+double smoothValue(double value, double min_input, double max_input, double min_output, double max_output) {
   double clamp_value = value;
   if (value < min_input) clamp_value = min_input;
-  if (value > max_input) clamp_value = max_output;
-  cout << "clamp: " << clamp_value*(max_output-min_output)/(max_input-min_input) << endl
-       << "min output" << min_output << endl; 
+  if (value > max_input) clamp_value = max_input;
   return min_output + (clamp_value-min_input)*(max_output-min_output)/(max_input-min_input);
 }

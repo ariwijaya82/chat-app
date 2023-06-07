@@ -20,14 +20,12 @@ void RealTimePlot::paintEvent(QPaintEvent*) {
     for (int i = 0; i < dataPosition.size(); i++) {
         painter.drawEllipse(dataPosition[i], 2, 2);
     }
+    if (!target.isNull())
+        painter.drawLine(dataPosition.back(), transformPoint(target.x(), target.y()));
 
     painter.setPen(Qt::yellow);
     for (int i = 1; i < dataPath.size(); i++) {
-        int x1 = dataPath[i - 1].x();
-        int y1 = dataPath[i - 1].y();
-        int x2 = dataPath[i].x();
-        int y2 = dataPath[i].y();
-        painter.drawLine(x1, y1, x2, y2);
+        painter.drawLine(dataPath[i], dataPath[i-1]);
     }
 
     painter.setPen(Qt::blue);
@@ -38,6 +36,12 @@ void RealTimePlot::paintEvent(QPaintEvent*) {
             dataPosition[0].y(),
             dataPosition[0].x() + radius*cos(directionRadian),
             dataPosition[0].y() + radius*sin(directionRadian));
+        // painter.setPen(Qt::yellow);
+        // painter.drawLine(
+        //     dataPosition[0].x(),
+        //     dataPosition[0].y(),
+        //     dataPosition[0].x() + radius*cos(targetDir),
+        //     dataPosition[0].y() + radius*sin(targetDir));
     }
 }
 
@@ -46,16 +50,12 @@ void RealTimePlot::updatePlot() {
 }
 
 void RealTimePlot::addDataPosition(int x, int y) {
-    int x_ = x + 470;
-    int y_ = 320 - y;
-    QPointF point(x_, y_);
+    QPointF point = transformPoint(x, y);
     dataPosition.append(point);
     if (dataPosition.size() > 1) dataPosition.removeFirst();
 }
 
 void RealTimePlot::addDataPath(int x, int y) {
-    int x_ = x + 470;
-    int y_ = 320 - y;
-    QPointF point(x_, y_);
+    QPointF point = transformPoint(x, y);
     dataPath.append(point);
 }

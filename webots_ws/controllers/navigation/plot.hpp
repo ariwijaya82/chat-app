@@ -12,6 +12,9 @@ class RealTimePlot : public QWidget {
   void addDataPosition(int, int);
   void addDataPath(int, int);
   void setDirection(double dirRad) { directionRadian = dirRad; }
+  void setTargetDir(double dirRad) { targetDir = dirRad; }
+  void setTarget(int x, int y) { target = QPointF(x, y); }
+  QPointF transformPoint(int x, int y) { return QPointF(x+470, 320-y); }
 
  protected:
   void paintEvent(QPaintEvent*) override;
@@ -22,6 +25,8 @@ class RealTimePlot : public QWidget {
   QVector<QPointF> dataPosition;
   QVector<QPointF> dataPath;
   double directionRadian;
+  double targetDir;
+  QPointF target;
 };
 
 #endif
