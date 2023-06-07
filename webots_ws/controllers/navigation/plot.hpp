@@ -8,14 +8,20 @@
 
 class RealTimePlot : public QWidget {
  public:
-  RealTimePlot(QWidget* parent=nullptr);
-  void updatePlot(double, double);
+  RealTimePlot(int timeStep=0, QWidget* parent=nullptr);
+  void addDataPosition(int, int);
+  void addDataPath(int, int);
+  void setDirection(double dirRad) { directionRadian = dirRad; }
 
  protected:
   void paintEvent(QPaintEvent*) override;
+  void updatePlot();
 
  private:
-  QVector<QPointF> dataPoints;
+  QTimer* timer;
+  QVector<QPointF> dataPosition;
+  QVector<QPointF> dataPath;
+  double directionRadian;
 };
 
 #endif

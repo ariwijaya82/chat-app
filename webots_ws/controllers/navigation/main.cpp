@@ -42,9 +42,6 @@ void readPath(vector<double> &x_path, vector<double> &y_path);
 double getDirection(double x, double y);
 int smoothValue(double value, double min_input, double max_input, double min_output, double max_output);
 
-QApplication *app;
-QLabel *sensorValueLabel;
-
 webots::Robot *robot;
 int timeStep;
 Accelerometer *accelerometer;
@@ -92,16 +89,20 @@ int main(int argc, char** argv) {
     robot->step(timeStep);
     motionManager->playPage(9);
     wait(200);
+
+    vector<double> x_path, y_path;
+    readPath(x_path, y_path);
+    for (int i = 0; i < x_path.size(); i++) {
+      plot.addDataPath(x_path[i]*100, y_path[i]*100);
+    }
+
     bool isWalking = false; 
     int key = 0;
-
-
-    plot.updatePlot(-100, -100);
-
     while(true) {
       checkIfFallen();
 
-      gaitManager->setXAmplitude(10.0);
+      gaitManager->setXAmplitude(0.0);
+      gaitManager->setAAmplitude(0.0);
 
       while ((key = keyboard->getKey()) >= 0) {
         if (key == ' ') {
@@ -117,17 +118,33 @@ int main(int argc, char** argv) {
             wait(200);
           }
         }
+        else if (key == Keyboard::UP)
+          gaitManager->setXAmplitude(30.0);
+        else if (key == Keyboard::DOWN)
+          gaitManager->setXAmplitude(-20.0);
+        else if (key == Keyboard::RIGHT)
+          gaitManager->setAAmplitude(-5.0);
+        else if (key == Keyboard::LEFT)
+          gaitManager->setAAmplitude(5.0);
       }
 
-      // if (isWalking) {
-      //   plot->updatePlot()
-      // }
+      if (isWalking) {
+        int x = gps->getValues()[0]*100;
+        int y = gps->getValues()[1]*100;
+        plot.addDataPosition(x, y);
 
+        int dir = getDirection(compass->getValues()[0], compass->getValues()[1]);
+        cout << "x: " << compass->getValues()[0] << ", y: " << compass->getValues()[1] << ", z: " << compass->getValues()[2] << endl;
+        cout << "dir: " << dir << endl;
+        plot.setDirection(dir*M_PI/180.0);
+      }
+
+      app.processEvents();
       gaitManager->step(timeStep);
       robot->step(timeStep);
     }
 
-    return 0;
+    return app.exec();
 }
 
 void wait(int ms) {
@@ -181,9 +198,10 @@ void readPath(vector<double> &x_path, vector<double> &y_path) {
 }
 
 double getDirection(double x, double y) {
-  double rad = atan2(x, y);
-  rad *= 180.0/M_PI;
-  return rad;
+  double deg = atan2(y, x) * 180.0/M_PI;
+  deg -= 90.0;
+  if (deg < -180.0) deg += 360.0; 
+  return deg;
 }
 
 int smoothValue(double value, double min_input, double max_input, double min_output, double max_output) {

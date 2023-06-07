@@ -44,6 +44,7 @@ DEF ROBOTISOP2 RobotisOp2 {
     Compass {
     }
     GPS {
+      rotation 0 0 1 -1.5707
     }
   ]
 }
