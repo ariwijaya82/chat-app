@@ -23,6 +23,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include "plot.hpp"
+
 using namespace webots;
 using namespace managers;
 using namespace std;
@@ -56,15 +58,14 @@ RobotisOp2MotionManager *motionManager;
 RobotisOp2GaitManager *gaitManager;
 
 int main(int argc, char** argv) {
-    app = new QApplication(argc, argv);
-    sensorValueLabel = new QLabel();
-    sensorValueLabel->show();
-    QString sensorValueText = "Sensor Value: 123";
-    sensorValueLabel->setText(sensorValueText);
+    QApplication app(argc, argv);
 
     robot = new webots::Robot();
-
     timeStep = robot->getBasicTimeStep();
+
+    RealTimePlot plot;
+    plot.show();
+
     accelerometer = robot->getAccelerometer("Accelerometer");
     gyro = robot->getGyro("Gyro");
     gps = robot->getGPS("gps");
@@ -94,6 +95,9 @@ int main(int argc, char** argv) {
     bool isWalking = false; 
     int key = 0;
 
+
+    plot.updatePlot(-100, -100);
+
     while(true) {
       checkIfFallen();
 
@@ -114,6 +118,10 @@ int main(int argc, char** argv) {
           }
         }
       }
+
+      // if (isWalking) {
+      //   plot->updatePlot()
+      // }
 
       gaitManager->step(timeStep);
       robot->step(timeStep);
