@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "qapplication": "cpp",
-        "qtimer": "cpp"
+        "qtimer": "cpp",
+        "chrono": "cpp"
     }
 }

@@ -2,7 +2,7 @@
 
 const int MaxDataPoints = 1000;
 const double TimeStep = 0.01;
-const double UpdateInterval = 50;  // milliseconds
+const double UpdateInterval = 500;  // milliseconds
 
 RealTimePlot::RealTimePlot(QWidget* parent) : QWidget(parent) {
     setFixedSize(800, 600);
@@ -17,7 +17,7 @@ RealTimePlot::RealTimePlot(QWidget* parent) : QWidget(parent) {
     currentTime = 0;
 
     // Initialize the data array
-    dataPoints.reserve(MaxDataPoints);
+    // dataPoints.reserve(MaxDataPoints);
 }
 
 void RealTimePlot::paintEvent(QPaintEvent*) {
@@ -44,27 +44,24 @@ void RealTimePlot::paintEvent(QPaintEvent*) {
     // Draw the plot data
     painter.setPen(Qt::blue);
     for (int i = 1; i < dataPoints.size(); ++i) {
-      int x1 = plotRect.left() + dataPoints[i - 1].x() * plotWidth;
-      int y1 = plotRect.bottom() - dataPoints[i - 1].y() * plotHeight;
-      int x2 = plotRect.left() + dataPoints[i].x() * plotWidth;
-      int y2 = plotRect.bottom() - dataPoints[i].y() * plotHeight;
+      int x1 = plotRect.left() + dataPoints[i - 1].x() * 10;
+      int y1 = plotRect.bottom() - dataPoints[i - 1].y() * 10;
+      int x2 = plotRect.left() + dataPoints[i].x() * 10;
+      int y2 = plotRect.bottom() - dataPoints[i].y() * 10;
       painter.drawLine(x1, y1, x2, y2);
     }
 }
 
 void RealTimePlot::updatePlot() {
+    update();
+}
+
+void RealTimePlot::addData(int x, int y) {
     // Generate new data point
-    double value = qSin(currentTime);
-    dataPoints.append(QPointF(currentTime, value));
+    dataPoints.append(QPointF(x, y));
 
     // Remove old data if exceeding the maximum number of data points
-    if (dataPoints.size() > MaxDataPoints) {
-        dataPoints.removeFirst();
-    }
-
-    // Increment the time counter
-    currentTime += TimeStep;
-
-    // Redraw the plot
-    update();
+    // if (dataPoints.size() > MaxDataPoints) {
+    //     dataPoints.removeFirst();
+    // }
 }

@@ -6,6 +6,7 @@
 class RealTimePlot : public QWidget {
  public:
   RealTimePlot(QWidget* parent = nullptr);
+  void addData(int, int);
  protected:
   void paintEvent(QPaintEvent*) override;
   void updatePlot();
