@@ -1,16 +1,19 @@
+# python 3.9
+
 import numpy as np
-from scipy.spatial import Voronoi
+from scipy.spatial import Voronoi, voronoi_plot_2d
 import random
 import networkx as nx
 import math
 import bezier
 import csv
+import sys
+from matplotlib import pyplot as plt, patches
 
 num_points = 5
 random.seed(98)
 x = [random.uniform(-4.5,4.5) for _ in range(num_points)]
 y = [random.uniform(-3,3) for _ in range(num_points)]
-print('position', np.array([x, y]).T)
 
 x_edge = [-4.5,-4.5,-4.5,-2.25,0,2.25,4.5,4.5,4.5,2.25,0,-2.25]
 y_edge = [-3,0,3,3,3,3,3,0,-3,-3,-3,-3]
@@ -68,14 +71,56 @@ for index in range(len(path)):
 nodes = np.asfortranarray([x_path, y_path])
 curve = bezier.Curve(nodes, len(x_path)-1)
 
-result = curve.evaluate_multi(np.linspace(0.0, 1.0, 100))
+def generate_csv():
+    result = curve.evaluate_multi(np.linspace(0.0, 1.0, 100))
+    data = result.T
 
-header = ['x', 'y']
-data = result.T
+    with open('path.csv', 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerows(data)
 
-with open('path.csv', 'w', encoding='UTF8', newline='') as f:
-    writer = csv.writer(f)
+def generate_plot():
+    # draw plot
+    _, ax = plt.subplots()
+    rect = patches.Rectangle((-4.5,-3), 9, 6, linewidth=1, edgecolor='black', facecolor='green')
+    ax.add_patch(rect)
+    
+    plt.scatter(x, y, color='red', marker='o')
+    plt.scatter(
+      [start_point[0], goal_point[0]],
+      [start_point[1], goal_point[1]],
+      color='black',
+      marker='o'
+    )
+    
+    voronoi_plot_2d(vor, ax=ax, show_points=False, line_colors='blue', line_alpha=0.5)
+    
+    index = 0
+    for i, j in vor.vertices:
+        if point_inside_field((i, j)):
+          plt.text(i, j, str(index), ha='center', va='bottom')
+        index += 1
+    
+    index = 0
+    for i, j in coordinates:
+        if point_inside_field((i, j)):
+          plt.text(i, j, str(index), ha='center', va='bottom')
+        index += 1
+    
+    # draw path
+    plt.plot(x_path, y_path, marker='o', color='pink')
+    curve.plot(100, ax=ax)
+    
+    ax.set_aspect('equal')
+    ax.set_xlim(-5, 5)
+    ax.set_ylim(-3.5, 3.5)
+    
+    plt.show()
 
-    writer.writerow(header)
-    writer.writerows(data)
-    print(len(data))
+args = sys.argv[1]
+if args == 'plot':
+    generate_plot()
+elif args == 'csv':
+    generate_csv()
+else:
+    print("please provide argument plot or csv")

@@ -1,3 +1,7 @@
+<div align='center'>
 ### Humanoid Robot Simulation ###
+</div>
 
-still on progress
+---
+
+![](images/soccer_1.png?raw=true)

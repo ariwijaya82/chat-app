@@ -16,8 +16,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.01369019800880513 0.9995168837628602 -0.027903002552783513 0.9124312933870269
-  position -6.438853148463441 -2.6072802511054602 3.8851764929790593
+  orientation -0.13348646326911412 0.7281899694824194 0.6722504983033456 0.532446765692727
+  position -10.423449190277221 -4.356555896599757 3.942019867683325
   follow "myRobot"
 }
 TexturedBackground {
@@ -52,7 +52,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   translation -1.29242 1.36909 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_1"
-  controller "<none>"
+  controller "standing"
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
@@ -61,7 +61,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   translation 2.98044 1.07094 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_2"
-  controller "<none>"
+  controller "standing"
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
@@ -70,7 +70,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   translation -1.32859 -2.61208 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_3"
-  controller "<none>"
+  controller "standing"
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
@@ -79,7 +79,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   translation -3.97148 -0.0178989 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_4"
-  controller "<none>"
+  controller "standing"
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
@@ -88,7 +88,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   translation -0.240025 -1.82445 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_5"
-  controller "<none>"
+  controller "standing"
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
