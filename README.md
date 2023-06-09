@@ -1,7 +1,17 @@
 <div align='center'>
-### Humanoid Robot Simulation ###
-</div>
 
+### Humanoid Robot Simulation 
 ---
+![](assets/soccer_1.png?raw=true)
 
-![](images/soccer_1.png?raw=true)
+ </div>
+ 
+This project is about simulation humanoid robot soccer path planning with A* algorithm and bezier curves
+
+<br>
+
+Requirement:
+- c++ compiler
+- Python 3.9
+- Webots
+- Qt 6
