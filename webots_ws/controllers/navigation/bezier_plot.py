@@ -11,15 +11,28 @@ import sys
 from matplotlib import pyplot as plt, patches
 
 num_points = 5
-random.seed(98)
-x = [random.uniform(-4.5,4.5) for _ in range(num_points)]
-y = [random.uniform(-3,3) for _ in range(num_points)]
+# random_seed = [11, 22, 33, 44, 55]
+seed = int(sys.argv[2])
+def generate_rand(lower, upper):
+    global seed
+    seed *= 7
+    random.seed(seed)
+    return random.uniform(lower, upper)
+
+enemy = [None] * 5
+enemy[0] = [generate_rand(-2,2), generate_rand(-2,2)]
+enemy[1] = [generate_rand(-2,2), generate_rand(-2,2)]
+enemy[2] = [generate_rand(-2,2), generate_rand(-2,2)]
+enemy[3] = [generate_rand(-2,2), generate_rand(-2,2)]
+enemy[4] = [generate_rand(-2,2), generate_rand(-2,2)]
+x = [item[0] for item in enemy]
+y = [item[1] for item in enemy]
 
 x_edge = [-4.5,-4.5,-4.5,-2.25,0,2.25,4.5,4.5,4.5,2.25,0,-2.25]
 y_edge = [-3,0,3,3,3,3,3,0,-3,-3,-3,-3]
 
-start_point = [-4,-2.5]
-goal_point = [3.5,1]
+start_point = [generate_rand(-3,-2),generate_rand(-1,0)]
+goal_point = [generate_rand(3,4),generate_rand(0,1)]
 
 coordinates_x = [start_point[0]]+x+x_edge+[goal_point[0]]
 coordinates_y = [start_point[1]]+y+y_edge+[goal_point[1]]
@@ -86,6 +99,10 @@ def generate_plot():
     ax.add_patch(rect)
     
     plt.scatter(x, y, color='red', marker='o')
+    for i in range(len(x)):
+        circle = patches.Circle((x[i], y[i]), 0.5, color='red', fill=False)
+        ax.add_patch(circle)
+
     plt.scatter(
       [start_point[0], goal_point[0]],
       [start_point[1], goal_point[1]],
