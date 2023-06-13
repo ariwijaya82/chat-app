@@ -1,6 +1,7 @@
 #include "plot.hpp"
 #include "walk.hpp"
 #include "astar.hpp"
+#include "bezier.h"
 
 #include <iostream>
 #include <vector>
@@ -11,7 +12,7 @@
 #include <algorithm>
 
 void read_position_csv(std::vector<double> &x_path, std::vector<double> &y_path) {
-  std::string filename = "./data/position.csv";
+  std::string filename = "../../data/position.csv";
   std::fstream file(filename, std::ios::in);
   std::string line, value;
   if (file.is_open()) {
@@ -22,6 +23,30 @@ void read_position_csv(std::vector<double> &x_path, std::vector<double> &y_path)
       getline(str, value, ',');
       y_path.push_back(stod(value));
     }
+  }
+}
+
+void read_path(std::vector<std::pair<int,int>> &path) {
+  std::string filename = "../../data/curve.csv";
+  std::fstream file(filename, std::ios::in);
+  std::string line, value;
+  if (file.is_open()) {
+    while (getline(file, line)) {
+      std::stringstream str(line);
+      getline(str, value, ',');
+      int x = stod(value);
+      getline(str, value, ',');
+      int y = stod(value);
+      path.push_back(std::pair<int,int>{x, y});
+    }
+  }
+}
+
+void write_path_astar(std::vector<std::pair<int,int>>& path) {
+  std::string filename = "../../data/path.csv";
+  std::fstream file(filename, std::ios::out);
+  for (auto item : path) {
+    file << item.first << "," << item.second << std::endl;
   }
 }
 
@@ -57,6 +82,39 @@ double smoothValue(double value, double min_input, double max_input, double min_
   if (value < min_input) clamp_value = min_input;
   if (value > max_input) clamp_value = max_input;
   return min_output + (clamp_value-min_input)*(max_output-min_output)/(max_input-min_input);
+}
+
+void test_bezier() {
+  int num_nodes = 2;
+  int dimension = 2;
+  double nodes[4] = { 0.0, 0.0, 3.0, 4.0 };
+
+  // Outputs.
+  double length;
+  int error_val;
+
+  BEZ_compute_length(&num_nodes, &dimension, nodes, &length, &error_val);
+  std::cout << "length: " << length << std::endl;
+}
+
+void calc_path(std::vector<std::pair<int,int>>& path, std::vector<std::pair<int,int>>& result) {
+  int num_nodes = path.size();
+  int dimension = 2;
+  double nodes[num_nodes*dimension];
+  for (int i = 0; i < num_nodes; i++) {
+    nodes[i*2] = path[i].first;
+    nodes[i*2+1] = path[i].second;
+  }
+  int num_vals = 101;
+  double s_vals[num_vals];
+  for (int i = 0; i < num_vals; i++) {
+    s_vals[i] = 0.01 * i;
+  }
+  double evaluated[num_vals*dimension];
+  BEZ_evaluate_multi(&num_nodes, &dimension, nodes, &num_vals, s_vals, evaluated);
+  for (int i = 0; i < num_vals; i++) {
+    result.push_back(std::pair<int,int>{evaluated[i*2], evaluated[i*2+1]});
+  }
 }
 
 int main(int argc, char** argv) {
@@ -146,9 +204,11 @@ int main(int argc, char** argv) {
     }
     path_points.push_back(std::pair{x_path[1]*100, y_path[1]*100});
     plot->setPathPosition(path_points);
-    std::vector<std::pair<int,int>> bezier_path = computeNVertexBasierCurve2D(path_points);
+    std::vector<std::pair<int,int>> bezier_path;
+    calc_path(path_points, bezier_path);
     plot->setBezierPath(bezier_path);
     std::reverse(bezier_path.begin(), bezier_path.end());
+    // write_path_astar(path_points);
 
     bool isWalking = false;
     bool isControl = false;
