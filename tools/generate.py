@@ -1,13 +1,11 @@
-# python 3.9
-
 import numpy as np
 import random
 import csv
 import sys
 from matplotlib import pyplot as plt, patches
+import math
 
-
-# random_seed = [11, 22, 33, 44, 55]
+random_seed = [123, 234, 987, 56, 82]
 seed = 123
 if len(sys.argv) > 2: seed = int(sys.argv[2])
 def generate_rand(lower, upper):
@@ -16,19 +14,31 @@ def generate_rand(lower, upper):
     random.seed(seed)
     return random.uniform(lower, upper)
 
-num_points = 5
-enemy = [None] * num_points
-enemy[0] = [generate_rand(-2,2), generate_rand(-2,2)]
-enemy[1] = [generate_rand(-2,2), generate_rand(-2,2)]
-enemy[2] = [generate_rand(-2,2), generate_rand(-2,2)]
-enemy[3] = [generate_rand(-2,2), generate_rand(-2,2)]
-enemy[4] = [generate_rand(-2,2), generate_rand(-2,2)]
+num_enemy = 5
+position = [None] * (num_enemy+2)
+for i in range(len(position)):
+    if i == 0:
+        position[0] = [generate_rand(-4,-2), generate_rand(-2,2)]
+        continue
+
+    x_range = (-2,2) if i <= num_enemy else (2,4)
+    y_range = (-2,2)
+
+    new_position = None
+    other_position = position[:i]
+    collision = [True] * len(other_position)
+    while True in collision:
+        new_position = [generate_rand(x_range[0],x_range[1]), generate_rand(y_range[0],y_range[1])]
+        collision = [math.sqrt((new_position[0]-other[0])**2 + (new_position[1]-other[1])**2) < 1
+                        for other in other_position]
+    position[i] = new_position
+
+enemy = position[1:1+num_enemy]
 x = [item[0] for item in enemy]
 y = [item[1] for item in enemy]
 
-start_point = [generate_rand(-3,-2),generate_rand(-1,0)]
-goal_point = [generate_rand(3,4),generate_rand(0,1)]
-
+start_point = position[0]
+goal_point = position[-1]
 
 def generate_plot():
     # draw plot
