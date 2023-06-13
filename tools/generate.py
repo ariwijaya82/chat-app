@@ -64,15 +64,15 @@ def generate_world():
     x_ = [goal_point[0], start_point[0]] + x
     y_ = [goal_point[1], start_point[1]] + y
     for i in range(len(line_index)):
-        lines = open('./worlds/soccer.wbt', 'r').readlines()
+        lines = open('../webots_ws/worlds/soccer.wbt', 'r').readlines()
         if lines[line_index[i]-1].find('translation') != -1:
             lines[line_index[i]-1] = f'  translation {x_[i]} {y_[i]} {0.236 if i != 0 else 0.03}\n'
-            file = open('./worlds/soccer.wbt', 'w')
+            file = open('../webots_ws/worlds/soccer.wbt', 'w')
             file.writelines(lines)
             file.close()
 
     # position csv
-    file = open('./data/position.csv', 'w')
+    file = open('../webots_ws/data/position.csv', 'w')
     writer = csv.writer(file)
     writer.writerows(np.array([x_, y_]).T)
 

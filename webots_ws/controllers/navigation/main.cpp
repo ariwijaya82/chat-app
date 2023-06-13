@@ -26,75 +26,11 @@ void read_position_csv(std::vector<double> &x_path, std::vector<double> &y_path)
   }
 }
 
-void read_path(std::vector<std::pair<int,int>> &path) {
-  std::string filename = "../../data/curve.csv";
-  std::fstream file(filename, std::ios::in);
-  std::string line, value;
-  if (file.is_open()) {
-    while (getline(file, line)) {
-      std::stringstream str(line);
-      getline(str, value, ',');
-      int x = stod(value);
-      getline(str, value, ',');
-      int y = stod(value);
-      path.push_back(std::pair<int,int>{x, y});
-    }
-  }
-}
-
-void write_path_astar(std::vector<std::pair<int,int>>& path) {
-  std::string filename = "../../data/path.csv";
-  std::fstream file(filename, std::ios::out);
-  for (auto item : path) {
-    file << item.first << "," << item.second << std::endl;
-  }
-}
-
-double computeBinominal(int n, int k){
-    double value = 1.0;
-    for (int i = 1; i <= k; i++) {
-        value = value * ((n + 1 - i) / i);
-    }
-    if (n == k) {
-        value = 1;
-    }
-    return value;
-}
-
-std::vector<std::pair<int,int>> computeNVertexBasierCurve2D(std::vector<std::pair<int,int>>& points) {
-    std::vector<std::pair<int,int>> result;
-
-    int n = points.size() - 1;
-    for (double t = 0.0; (int)(t*100) <= 100; t += 0.01) {
-        double bCurveXt{0};
-        double bCurveYt{0};
-        for (int i = 0; i <= n; ++i) {
-            bCurveXt += computeBinominal(n, i) * std::pow((1 - t), (n - i)) * std::pow(t, i) * points[i].first;
-            bCurveYt += computeBinominal(n, i) * std::pow((1 - t), (n - i)) * std::pow(t, i) * points[i].second;
-        }
-        result.push_back(std::pair{bCurveXt, bCurveYt});
-    }
-    return result;
-}
-
 double smoothValue(double value, double min_input, double max_input, double min_output, double max_output) {
   double clamp_value = value;
   if (value < min_input) clamp_value = min_input;
   if (value > max_input) clamp_value = max_input;
   return min_output + (clamp_value-min_input)*(max_output-min_output)/(max_input-min_input);
-}
-
-void test_bezier() {
-  int num_nodes = 2;
-  int dimension = 2;
-  double nodes[4] = { 0.0, 0.0, 3.0, 4.0 };
-
-  // Outputs.
-  double length;
-  int error_val;
-
-  BEZ_compute_length(&num_nodes, &dimension, nodes, &length, &error_val);
-  std::cout << "length: " << length << std::endl;
 }
 
 void calc_path(std::vector<std::pair<int,int>>& path, std::vector<std::pair<int,int>>& result) {
@@ -208,7 +144,6 @@ int main(int argc, char** argv) {
     calc_path(path_points, bezier_path);
     plot->setBezierPath(bezier_path);
     std::reverse(bezier_path.begin(), bezier_path.end());
-    // write_path_astar(path_points);
 
     bool isWalking = false;
     bool isControl = false;
