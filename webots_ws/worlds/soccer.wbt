@@ -56,6 +56,11 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
+  bodySlot [
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
   translation 0.43835861426955036 -1.0675583024379405 0.236
@@ -65,6 +70,11 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
+  bodySlot [
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
   translation -1.2315261350431688 1.2490216024669105 0.236
@@ -74,6 +84,11 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
+  bodySlot [
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
   translation 1.0367071480033294 0.356968575422961 0.236
@@ -83,6 +98,11 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
+  bodySlot [
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
   translation 0.3191063892059409 0.6940618692039577 0.236
@@ -92,6 +112,11 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
+  bodySlot [
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 RobocupSoccerField {
   size "kid"

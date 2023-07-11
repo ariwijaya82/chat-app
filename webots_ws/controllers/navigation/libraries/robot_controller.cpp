@@ -1,4 +1,4 @@
-#include "walk.hpp"
+#include "robot_controller.hpp"
 
 static const char *motorNames[20] = {
   "ShoulderR" /*ID1 */, "ShoulderL" /*ID2 */, "ArmUpperR" /*ID3 */, "ArmUpperL" /*ID4 */, "ArmLowerR" /*ID5 */,
@@ -7,7 +7,7 @@ static const char *motorNames[20] = {
   "AnkleL" /*ID16*/,    "FootR" /*ID17*/,     "FootL" /*ID18*/,     "Neck" /*ID19*/,      "Head" /*ID20*/
 };
 
-Walk::Walk() {
+RobotController::RobotController() {
     robot = new webots::Robot();
     timeStep = robot->getBasicTimeStep();
 
@@ -36,29 +36,22 @@ Walk::Walk() {
     wait(200);
 }
 
-void Walk::run(bool start) {
+void RobotController::run(bool start) {
     if (start) gaitManager->start();
     else gaitManager->stop();
 }
 
-void Walk::setVel(double x, double a) {
+void RobotController::setVel(double x, double a) {
     gaitManager->setXAmplitude(x);
     gaitManager->setAAmplitude(a);
 }
 
-void Walk::robotStep() {
+void RobotController::robotStep() {
     robot->step(timeStep);
     gaitManager->step(timeStep);
 }
 
-double Walk::getDir() {    
-    double dir = atan2(compass->getValues()[1], compass->getValues()[0]);
-    dir -= M_PI/2;
-    if (dir < -M_PI) dir += M_PI*2;
-    return dir;
-}
-
-void Walk::fallen() {
+void RobotController::fallen() {
     static int fup = 0;
     static int fdown = 0;
     static const double acc_tolerance = 80.0;
@@ -86,7 +79,48 @@ void Walk::fallen() {
     }
 }
 
-void Walk::wait(int ms) {
+void RobotController::manualController() {
+    int key;
+    while ((key = keyboard->getKey()) >= 0) {
+        switch (key) {
+            case webots::Keyboard::PAGEUP:
+                run(true);
+                break;
+            case webots::Keyboard::PAGEDOWN:
+                run(false);
+                break;
+            case webots::Keyboard::UP:
+                setVel(1,0);
+                break;
+            case webots::Keyboard::DOWN:
+                setVel(-1,0);
+                break;
+            case webots::Keyboard::RIGHT:
+                setVel(0,-0.5);
+                break;
+            case webots::Keyboard::LEFT:
+                setVel(0,0.5);
+                break;
+        }
+    }
+}
+
+double RobotController::getDirInRadian() {    
+    double dir = atan2(compass->getValues()[1], compass->getValues()[0]);
+    dir -= M_PI/2;
+    if (dir < -M_PI) dir += M_PI*2;
+    return dir;
+}
+
+double RobotController::getDirInDegree() {    
+    return getDirInRadian() * 180 / M_PI;
+}
+
+pair<double, double> RobotController::getPosition() {
+    return pair<double, double>{gps->getValues()[0], gps->getValues()[1]};
+}
+
+void RobotController::wait(int ms) {
     double start = robot->getTime();
     double s = (double)ms / 1000.0;
     while(start + s < robot->getTime())

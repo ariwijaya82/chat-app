@@ -1,8 +1,16 @@
 #include <webots/Robot.hpp>
 #include <webots/PositionSensor.hpp>
+#include <webots/GPS.hpp>
 #include <RobotisOp2MotionManager.hpp>
 
 #include <string>
+#include <cstring>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define MAX_BUFFER_SIZE 1024
+#define PORT 8080
+#define SERVER_IP "127.0.0.1"
 
 using namespace webots;
 using namespace managers;

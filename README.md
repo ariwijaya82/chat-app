@@ -15,3 +15,4 @@ Requirement:
 - Python 3
 - Webots 2023a
 - Qt 6
+- Bezier library ([link](https://bezier.readthedocs.io/en/stable/abi/installation.html))
