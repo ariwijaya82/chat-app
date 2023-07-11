@@ -70,7 +70,7 @@ def generate_plot():
 
 def generate_world():
     # [ball, myRobot, enemy1, enemy2, enemy3, enemy4, enemy5]
-    line_index = [32, 36, 52, 61, 70, 79, 88]
+    line_index = [32, 36, 52, 66, 80, 94, 108]
     x_ = [goal_point[0], start_point[0]] + x
     y_ = [goal_point[1], start_point[1]] + y
     for i in range(len(line_index)):
