@@ -40,8 +40,9 @@ class PathPlanning {
         void releaseNodes(vector<Node*>&);
 
         Coordinate transformPoint(vector<double>&);
+        Coordinate calculateBezierPoint(double);
         vector<Coordinate> findPath();
-        vector<Coordinate> generateBezier();
+        vector<Coordinate> generateBezier(int);
 };
 
 #endif

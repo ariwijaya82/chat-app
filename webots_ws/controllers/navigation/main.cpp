@@ -1,7 +1,13 @@
 #include "robot_controller.hpp"
 #include "path_planning.hpp"
 #include "monitoring.hpp"
-#include "utils.hpp"
+
+double smoothValue(double value, double min_input, double max_input, double min_output, double max_output) {
+  double clamp_value = value;
+  if (value < min_input) clamp_value = min_input;
+  if (value > max_input) clamp_value = max_input;
+  return min_output + (clamp_value-min_input)*(max_output-min_output)/(max_input-min_input);
+}
 
 int main(int argc, char** argv) {
     // initialize QT
@@ -69,8 +75,8 @@ int main(int argc, char** argv) {
         int target_dir = atan2(robot_position.second - target.second, target.first - robot_position.first) * 180.0 / M_PI;
         int delta_dir = target_dir - robot_direction;
 
-        double x_speed = utils::smoothValue(abs(delta_dir), 0, 60, 1.0, 0.0);
-        double a_speed = utils::smoothValue(delta_dir, -60, 60, 1.0, -1.0);
+        double x_speed = smoothValue(abs(delta_dir), 0, 60, 1.0, 0.0);
+        double a_speed = smoothValue(delta_dir, -60, 60, 1.0, -1.0);
 
         controller->setVel(x_speed, a_speed);
       }

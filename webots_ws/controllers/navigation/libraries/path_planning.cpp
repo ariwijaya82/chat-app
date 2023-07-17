@@ -1,12 +1,12 @@
 #include "path_planning.hpp"
 #include "constants.hpp"
-#include "utils.hpp"
-#include "bezier.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits.h>
+#include <fstream>
+#include <sstream>
 
 bool Coordinate::operator==(const Coordinate& coord_) {
     return (x == coord_.x && y == coord_.y);
@@ -27,7 +27,17 @@ int Node::getScore(){
 }
 
 PathPlanning::PathPlanning() {
-    vector<vector<double>> points = utils::read_position_csv();
+    vector<vector<double>> points;
+    fstream file(Constants::positionFile, ios::in);
+    string line, x, y;
+    if (file.is_open()) {
+        while (getline(file, line)) {
+            stringstream str(line);
+            getline(str, x, ',');
+            getline(str, y, ',');
+            points.push_back(vector<double>{stod(x), stod(y)});
+        }
+    }
     start = transformPoint(points[1]);
     goal = transformPoint(points[0]);
     for (int i = 2; i <= 6; i++) {
@@ -46,7 +56,7 @@ PathPlanning::PathPlanning() {
     }
 
     path = findPath();
-    bezier_path = generateBezier();
+    bezier_path = generateBezier(100);
 }
 
 pair<int, int> PathPlanning::getStart() {
@@ -225,26 +235,51 @@ vector<Coordinate> PathPlanning::findPath() {
     return path;
 }
 
-vector<Coordinate> PathPlanning::generateBezier() {
-    int num_nodes = path.size();
-    int dimension = 2;
-    double nodes[num_nodes*dimension];
-    for (int i = 0; i < num_nodes; i++) {
-        nodes[i*2] = path[i].x;
-        nodes[i*2+1] = path[i].y;
-    }
-    int num_vals = 101;
-    double s_vals[num_vals];
-    for (int i = 0; i < num_vals; i++) {
-        s_vals[i] = 0.01 * i;
-    }
-    double evaluated[num_vals*dimension];
-    BEZ_evaluate_multi(&num_nodes, &dimension, nodes, &num_vals, s_vals, evaluated);
+vector<Coordinate> PathPlanning::generateBezier(int numPoints) {
+    // int num_nodes = path.size();
+    // int dimension = 2;
+    // double nodes[num_nodes*dimension];
+    // for (int i = 0; i < num_nodes; i++) {
+    //     nodes[i*2] = path[i].x;
+    //     nodes[i*2+1] = path[i].y;
+    // }
+    // int num_vals = 101;
+    // double s_vals[num_vals];
+    // for (int i = 0; i < num_vals; i++) {
+    //     s_vals[i] = 0.01 * i;
+    // }
+    // double evaluated[num_vals*dimension];
+    // BEZ_evaluate_multi(&num_nodes, &dimension, nodes, &num_vals, s_vals, evaluated);
 
-    vector<Coordinate> result;
-    for (int i = 0; i < num_vals; i++) {
-        result.push_back(Coordinate{(int)evaluated[i*2], (int)evaluated[i*2+1]});
-    }
+    // vector<Coordinate> result;
+    // for (int i = 0; i < num_vals; i++) {
+    //     result.push_back(Coordinate{(int)evaluated[i*2], (int)evaluated[i*2+1]});
+    // }
 
+    // return result;
+
+    vector<Coordinate> result(numPoints+1);
+    for (int i = 0; i <= numPoints; ++i) {
+        double t = static_cast<double>(i) / numPoints;
+        Coordinate p = calculateBezierPoint(t);
+        result[i] = p;
+    }
     return result;
+}
+
+Coordinate PathPlanning::calculateBezierPoint(double t) {
+    vector<pair<double, double>> points;
+    for (auto &point : path) {
+        points.push_back(pair<double, double>{static_cast<double>(point.x), static_cast<double>(point.y)});
+    }
+    int n = points.size() - 1;
+
+    for (int r = 1; r <= n; ++r) {
+        for (int i = 0; i <= n - r; ++i) {
+            points[i].first = (1 - t) * points[i].first + t * points[i + 1].first;
+            points[i].second = (1 - t) * points[i].second + t * points[i + 1].second;
+        }
+    }
+
+    return Coordinate{static_cast<int>(points[0].first), static_cast<int>(points[0].second)};
 }
