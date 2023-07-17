@@ -16,3 +16,9 @@ Requirement:
 - Webots 2023a
 - Qt 6
 - Bezier library ([link](https://bezier.readthedocs.io/en/stable/abi/installation.html))
+
+Add dynamic linking library
+export WEBOTS_HOME=/usr/local/webots
+export RESOURCES_PATH=$WEBOTS_HOME/projects/robots/robotis/darwin-op
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RESOURCES_PATH/libraries/managers/:$WEBOTS_HOME/lib/controller/:$RESOURCES_PATH/libraries/robotis-op2/

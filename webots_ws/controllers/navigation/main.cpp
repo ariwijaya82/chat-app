@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     Monitoring* monitor = new Monitoring();
     monitor->show();
 
-    // initialize walk engine
+    // initialize robot controller
     RobotController* controller = new RobotController();
 
     // Calculate Path
