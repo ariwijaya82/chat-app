@@ -236,28 +236,6 @@ vector<Coordinate> PathPlanning::findPath() {
 }
 
 vector<Coordinate> PathPlanning::generateBezier(int numPoints) {
-    // int num_nodes = path.size();
-    // int dimension = 2;
-    // double nodes[num_nodes*dimension];
-    // for (int i = 0; i < num_nodes; i++) {
-    //     nodes[i*2] = path[i].x;
-    //     nodes[i*2+1] = path[i].y;
-    // }
-    // int num_vals = 101;
-    // double s_vals[num_vals];
-    // for (int i = 0; i < num_vals; i++) {
-    //     s_vals[i] = 0.01 * i;
-    // }
-    // double evaluated[num_vals*dimension];
-    // BEZ_evaluate_multi(&num_nodes, &dimension, nodes, &num_vals, s_vals, evaluated);
-
-    // vector<Coordinate> result;
-    // for (int i = 0; i < num_vals; i++) {
-    //     result.push_back(Coordinate{(int)evaluated[i*2], (int)evaluated[i*2+1]});
-    // }
-
-    // return result;
-
     vector<Coordinate> result(numPoints+1);
     for (int i = 0; i <= numPoints; ++i) {
         double t = static_cast<double>(i) / numPoints;
