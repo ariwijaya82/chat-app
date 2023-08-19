@@ -17,7 +17,8 @@ Requirement:
 - Qt 6
 
 Add dynamic linking library
+```
 export WEBOTS_HOME=/usr/local/webots
 export RESOURCES_PATH=$WEBOTS_HOME/projects/robots/robotis/darwin-op
-
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RESOURCES_PATH/libraries/managers/:$WEBOTS_HOME/lib/controller/:$RESOURCES_PATH/libraries/robotis-op2/
+```
