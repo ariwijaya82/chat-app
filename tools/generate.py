@@ -7,7 +7,8 @@ import math
 
 random_seed = [123, 234, 987, 56, 82]
 seed = 123
-if len(sys.argv) > 2: seed = int(sys.argv[2])
+if len(sys.argv) > 2:
+    seed = random_seed[int(sys.argv[2])]
 def generate_rand(lower, upper):
     global seed
     seed *= 7
@@ -73,23 +74,39 @@ def generate_world():
     line_index = [32, 36, 52, 66, 80, 94, 108]
     x_ = [goal_point[0], start_point[0]] + x
     y_ = [goal_point[1], start_point[1]] + y
+    lines = open('../webots_ws/worlds/soccer.wbt', 'r').readlines()
     for i in range(len(line_index)):
-        lines = open('../webots_ws/worlds/soccer.wbt', 'r').readlines()
         if lines[line_index[i]-1].find('translation') != -1:
             lines[line_index[i]-1] = f'  translation {x_[i]} {y_[i]} {0.236 if i != 0 else 0.03}\n'
-            file = open('../webots_ws/worlds/soccer.wbt', 'w')
-            file.writelines(lines)
-            file.close()
+    file = open('../webots_ws/worlds/soccer.wbt', 'w')
+    file.writelines(lines)
+    file.close()
 
     # position csv
     file = open('../webots_ws/data/position.csv', 'w')
     writer = csv.writer(file)
     writer.writerows(np.array([x_, y_]).T)
 
+def generate_position_from_world():
+    # [ball, myRobot, enemy1, enemy2, enemy3, enemy4, enemy5]
+    line_index = [32, 36, 52, 66, 80, 94, 108]
+    lines = open('../webots_ws/worlds/soccer.wbt', 'r').readlines()
+    position = []
+    for i in range(len(line_index)):
+        temp_data = lines[line_index[i]-1].split()
+        position.append([temp_data[1], temp_data[2]])
+
+    # position csv
+    file = open('../webots_ws/data/position.csv', 'w')
+    writer = csv.writer(file)
+    writer.writerows(np.array(position))
+
 args = sys.argv[1]
 if args == 'plot':
     generate_plot()
 elif args == 'world':
     generate_world()
+elif args == 'copy':
+    generate_position_from_world()
 else:
-    print("please provide argument plot or world")
+    print("input format generate.py [plot|world|copy] [null|0-5]")

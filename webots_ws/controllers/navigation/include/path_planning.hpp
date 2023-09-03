@@ -8,6 +8,7 @@ using namespace std;
 struct Coordinate {
     int x, y;
     bool operator==(const Coordinate&);
+    Coordinate operator+(const Coordinate&);
 };
 
 struct Node {
@@ -34,15 +35,16 @@ class PathPlanning {
         Coordinate start, goal;
         vector<Coordinate> enemy, walls, path, bezier_path;
 
-        int heuristic(Coordinate, Coordinate);
-        bool detectCollision(Coordinate);
-        Node* findNodeOnList(vector<Node*>&, Coordinate);
-        void releaseNodes(vector<Node*>&);
-
-        Coordinate transformPoint(vector<double>&);
-        Coordinate calculateBezierPoint(double);
         vector<Coordinate> findPath();
         vector<Coordinate> generateBezier(int);
+        
+        float heuristic(Coordinate&, Coordinate&, int);
+        bool detectCollision(Coordinate&);
+        vector<Coordinate> getNeighbors(Coordinate&);
+        Node* findNodeOnList(vector<Node*>&, Coordinate&);
+        void releaseNodes(vector<Node*>&);
+        Coordinate transformPoint(vector<double>&);
+        Coordinate calculateBezierPoint(double);
 };
 
 #endif

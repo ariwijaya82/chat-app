@@ -12,8 +12,8 @@ bool Coordinate::operator==(const Coordinate& coord_) {
     return (x == coord_.x && y == coord_.y);
 }
 
-Coordinate operator+(const Coordinate& coord_1, const Coordinate& coord_2) {
-    return {coord_1.x + coord_2.x, coord_1.y + coord_2.y};
+Coordinate Coordinate::operator+(const Coordinate& coord_) {
+    return {x + coord_.x, y + coord_.y};
 }
 
 Node::Node(Coordinate coordinate_, Node* parent_) {
@@ -99,12 +99,27 @@ vector<pair<int, int>> PathPlanning::getBezierPath() {
     return result;
 }
 
-int PathPlanning::heuristic(Coordinate source_, Coordinate target_) {
-    Coordinate delta = {target_.x-source_.x, target_.y-source_.y};
-    return static_cast<int>(sqrt(pow(delta.x, 2) + pow(delta.y, 2)));
+float PathPlanning::heuristic(Coordinate& source_, Coordinate& target_, int type) {
+    switch (type) {
+    case 1: // manhatan
+        return static_cast<float>(abs(target_.x-source_.x) + abs(target_.y-source_.y));
+        break;
+    case 2: // diagonal
+        return static_cast<float>(max(abs(target_.x-source_.x), abs(target_.y-source_.y)));
+        break;
+    case 3: // octile
+        return static_cast<float>(
+            max(abs(target_.x-source_.x), abs(target_.y-source_.y)) +
+            (sqrt(2)-1) * min(abs(target_.x-source_.x), abs(target_.y-source_.y))
+        );
+        break;
+    default: // euclidean
+        return static_cast<float>(sqrt(pow(target_.x-source_.x, 2) + pow(target_.y-source_.y, 2)));
+        break;
+    }
 }
 
-bool PathPlanning::detectCollision(Coordinate coord_) {
+bool PathPlanning::detectCollision(Coordinate& coord_) {
     if (coord_.x < 0 || coord_.x >= Constants::WIDTH ||
         coord_.y < 0 || coord_.y >= Constants::HEIGHT ||
         std::find(walls.begin(), walls.end(), coord_) != walls.end()) {
@@ -113,8 +128,43 @@ bool PathPlanning::detectCollision(Coordinate coord_) {
     return false;
 }
 
-Node* PathPlanning::findNodeOnList(vector<Node*>& nodes_, Coordinate coordinate_)
-{
+vector<Coordinate> PathPlanning::getNeighbors(Coordinate& coord_) {
+    int temp_x = (int)(start.x / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
+    int temp_y = (int)(start.y / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
+    vector<Coordinate> start_area {
+        Coordinate{temp_x, temp_y},
+        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y},
+        Coordinate{temp_x, temp_y+Constants::NODE_DISTANCE},
+        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y+Constants::NODE_DISTANCE},
+    };
+    temp_x = (int)(goal.x / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
+    temp_y = (int)(goal.y / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
+    vector<Coordinate> goal_area {
+        Coordinate{temp_x, temp_y},
+        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y},
+        Coordinate{temp_x, temp_y+Constants::NODE_DISTANCE},
+        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y+Constants::NODE_DISTANCE},
+    };
+    vector<Coordinate> directions = {
+        { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 },
+        // { -1, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 }
+    };
+    for (auto &item : directions) {
+        item.x = coord_.x + item.x * Constants::NODE_DISTANCE;
+        item.y = coord_.y + item.y * Constants::NODE_DISTANCE;
+    }
+    if (coord_ == start) {
+        return start_area;
+    } else if (std::find(start_area.begin(), start_area.end(), coord_) != start_area.end()) {
+        directions.push_back(start);
+    } else if (std::find(goal_area.begin(), goal_area.end(), coord_) != goal_area.end()) {
+        directions.push_back(goal);
+    }
+    return directions;
+    
+}
+
+Node* PathPlanning::findNodeOnList(vector<Node*>& nodes_, Coordinate& coordinate_) {
     for (auto node : nodes_) {
         if (node->coordinate == coordinate_) {
             return node;
@@ -137,55 +187,10 @@ Coordinate PathPlanning::transformPoint(vector<double>& point) {
 vector<Coordinate> PathPlanning::findPath() {
     Node* current = nullptr;
     vector<Node*> openList, closeList;
+    
     openList.reserve(100);
     closeList.reserve(100);
-
-    int temp_x = (int)(start.x / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
-    int temp_y = (int)(start.y / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
-    vector<Coordinate> start_area {
-        Coordinate{temp_x, temp_y},
-        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y},
-        Coordinate{temp_x, temp_y+Constants::NODE_DISTANCE},
-        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y+Constants::NODE_DISTANCE},
-    };
-    temp_x = (int)(goal.x / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
-    temp_y = (int)(goal.y / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
-    vector<Coordinate> goal_area {
-        Coordinate{temp_x, temp_y},
-        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y},
-        Coordinate{temp_x, temp_y+Constants::NODE_DISTANCE},
-        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y+Constants::NODE_DISTANCE},
-    };
-
-    Coordinate start_point, goal_point;
-    int min_value = INT_MAX;
-    for (int i = 0; i < 4; i++) {
-      int value = sqrt(pow(start_area[i].x - start.x, 2)+pow(start_area[i].y - start.y, 2))
-        + sqrt(pow(start_area[i].x - goal.x, 2)+pow(start_area[i].y - goal.y, 2));
-      if (min_value > value) {
-        min_value = value;
-        start_point = start_area[i];
-      }
-    }
-    min_value = INT_MAX;
-    for (int i = 0; i < 4; i++) {
-      int value = sqrt(pow(goal_area[i].x - start.x, 2)+pow(goal_area[i].y - start.y, 2))
-        + sqrt(pow(goal_area[i].x - goal.x, 2)+pow(goal_area[i].y - goal.y, 2));
-      if (min_value > value) {
-        min_value = value;
-        goal_point = goal_area[i];
-      }
-    }
-
-    vector<Coordinate> directions = {
-        { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 },
-        { -1, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 }
-    };
-    for (auto &item : directions) {
-        item.x *= Constants::NODE_DISTANCE;
-        item.y *= Constants::NODE_DISTANCE;
-    }
-    openList.push_back(new Node(start_point));
+    openList.push_back(new Node(start));
     while (!openList.empty()) {
         auto current_it = openList.begin();
         current = *current_it;
@@ -197,21 +202,20 @@ vector<Coordinate> PathPlanning::findPath() {
             }
         }
 
-        if (current->coordinate == goal_point) break;
+        if (current->coordinate == goal) break;
 
         closeList.push_back(current);
         openList.erase(current_it);
 
-        for (int i = 0; i < directions.size(); i++) {
-            Coordinate newCoord(current->coordinate + directions[i]);
-            if (detectCollision(newCoord) || findNodeOnList(closeList, newCoord)) continue;
-            int totalCost = current->G + ((i < 4) ? 1 : 1.4) * Constants::NODE_DISTANCE;
+        for (Coordinate& neighbor : getNeighbors(current->coordinate)) {
+            if (detectCollision(neighbor) || findNodeOnList(closeList, neighbor)) continue;
+            int totalCost = current->G + heuristic(current->coordinate, neighbor, 4);
 
-            Node* successor = findNodeOnList(openList, newCoord);
+            Node* successor = findNodeOnList(openList, neighbor);
             if (successor == nullptr) {
-                successor = new Node(newCoord, current);
+                successor = new Node(neighbor, current);
                 successor->G = totalCost;
-                successor->H = heuristic(successor->coordinate, goal_point);
+                successor->H = heuristic(successor->coordinate, goal, 4);
                 openList.push_back(successor);
             } else if (totalCost < successor->G) {
                 successor->parent = current;

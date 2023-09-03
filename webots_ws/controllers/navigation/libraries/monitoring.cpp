@@ -117,8 +117,12 @@ void Monitoring::paintEvent(QPaintEvent*) {
         painter.drawEllipse(collision[i], 2, 2);
     }
     painter.setBrush(Qt::gray);
+    painter.setPen(Qt::gray);
     for (int i = 0; i < path.size(); i++) {
         painter.drawEllipse(path[i], 2, 2);
+        if (i != 0) {
+            painter.drawLine(path[i], path[i-1]);
+        }
     }
     painter.setBrush(Qt::NoBrush);
     painter.setPen(Qt::magenta);
