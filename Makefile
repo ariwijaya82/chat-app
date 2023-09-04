@@ -13,7 +13,7 @@ LIBRARIES = -L"$(RESOURCES_PATH)/libraries/robotis-op2" -lrobotis-op2 \
 
 FLAGS = -fPIC
 
-LIB_SRC = $(wildcard lib/*.cpp)
+LIB_SRC = $(wildcard library/*.cpp)
 
 all: navigation standing testing
 
