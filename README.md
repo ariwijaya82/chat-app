@@ -2,7 +2,7 @@
 
 ### Humanoid Robot Simulation 
 ---
-![](assets/soccer_1.png?raw=true)
+![](webots_ws/assets/soccer_1.png?raw=true)
 
  </div>
  

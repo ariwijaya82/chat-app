@@ -11,14 +11,29 @@ LIBRARIES = -L"$(RESOURCES_PATH)/libraries/robotis-op2" -lrobotis-op2 \
 			-L"$(WEBOTS_HOME)/lib/controller" -lCppController -lController \
 			-lQt6Widgets -lQt6Core -lQt6Gui
 
-CXX_SOURCES = $(wildcard libraries/*.cpp) main.cpp
-TARGET = navigation
+FLAGS = -fPIC
 
-all: $(CXX_SOURCES)
-	g++ -fPIC -o $(TARGET) $(CXX_SOURCES) $(INCLUDE) $(LIBRARIES)
+LIB_SRC = $(wildcard lib/*.cpp)
+
+all: navigation standing testing
+
+navigation: $(LIB_SRC) src/navigation.cpp
+	mkdir -p build
+	g++ $(FLAGS) $^ -o ./build/navigation $(INCLUDE) $(LIBRARIES)
+
+standing: $(LIB_SRC) src/standing.cpp
+	mkdir -p webots_ws/controllers/standing
+	g++ $(FLAGS) $^ -o ./webots_ws/controllers/standing/standing $(INCLUDE) $(LIBRARIES)
+
+testing: $(LIB_SRC) src/testing.cpp
+	mkdir -p build
+	g++ $(FLAGS) $^ -o ./build/testing $(INCLUDE) $(LIBRARIES)
 
 run:
-	./$(TARGET)
+	./build/navigation
+
+test:
+	./build/testing
 
 clean:
-	rm $(TARGET)
+	rm -r build webots_ws/controllers

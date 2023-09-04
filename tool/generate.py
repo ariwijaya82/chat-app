@@ -83,7 +83,7 @@ def generate_world():
     file.close()
 
     # position csv
-    file = open('../webots_ws/data/position.csv', 'w')
+    file = open('../data/position.csv', 'w')
     writer = csv.writer(file)
     writer.writerows(np.array([x_, y_]).T)
 
@@ -97,7 +97,7 @@ def generate_position_from_world():
         position.append([temp_data[1], temp_data[2]])
 
     # position csv
-    file = open('../webots_ws/data/position.csv', 'w')
+    file = open('../data/position.csv', 'w')
     writer = csv.writer(file)
     writer.writerows(np.array(position))
 

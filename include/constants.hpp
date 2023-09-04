@@ -11,7 +11,7 @@ namespace Constants {
     const int NODE_DISTANCE = 50;
     
     const int PADDING = 20;
-    const string positionFile = "../../data/position.csv";
+    const string positionFile = "data/position.csv";
 }
 
 #endif
