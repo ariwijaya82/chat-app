@@ -1,9 +1,11 @@
-import numpy as np
-import random
-import csv
 import sys
-from matplotlib import pyplot as plt, patches
+import random
+import json
 import math
+from matplotlib import pyplot as plt, patches
+
+world_file_path = 'webots_ws/worlds/soccer.wbt'
+position_file_path = 'config/position.json'
 
 random_seed = [123, 234, 987, 56, 82]
 seed = 123
@@ -15,33 +17,37 @@ def generate_rand(lower, upper):
     random.seed(seed)
     return random.uniform(lower, upper)
 
+# generate random position
 num_enemy = 5
-position = [None] * (num_enemy+2)
-for i in range(len(position)):
+random_position = [None for i in range(num_enemy+2)]
+for i in range(num_enemy+2):
     if i == 0:
-        position[0] = [generate_rand(-4,-2), generate_rand(-2,2)]
+        random_position[0] = [generate_rand(-4,-2), generate_rand(-2,2)]
         continue
 
     x_range = (-2,2) if i <= num_enemy else (2,4)
     y_range = (-2,2)
 
     new_position = None
-    other_position = position[:i]
+    other_position = random_position[:i]
     collision = [True] * len(other_position)
+    # avoid collision between position
     while True in collision:
         new_position = [generate_rand(x_range[0],x_range[1]), generate_rand(y_range[0],y_range[1])]
         collision = [math.sqrt((new_position[0]-other[0])**2 + (new_position[1]-other[1])**2) < 1
                         for other in other_position]
-    position[i] = new_position
+    random_position[i] = new_position
 
-enemy = position[1:1+num_enemy]
-x = [item[0] for item in enemy]
-y = [item[1] for item in enemy]
+# draw random position with matplotlib
+def draw_position():
+    # init data
+    enemy = random_position[1:1+num_enemy]
+    x = [item[0] for item in enemy]
+    y = [item[1] for item in enemy]
 
-start_point = position[0]
-goal_point = position[-1]
+    start_point = random_position[0]
+    goal_point = random_position[-1]
 
-def generate_plot():
     # draw plot
     _, ax = plt.subplots()
     rect = patches.Rectangle((-5,-3.5), 10, 7, facecolor='green')
@@ -69,44 +75,79 @@ def generate_plot():
     
     plt.show()
 
-def generate_world():
+# update world and position file with generated random position
+def update_world_position():
     # [ball, myRobot, enemy1, enemy2, enemy3, enemy4, enemy5]
     line_index = [32, 36, 52, 66, 80, 94, 108]
-    x_ = [goal_point[0], start_point[0]] + x
-    y_ = [goal_point[1], start_point[1]] + y
-    lines = open('../webots_ws/worlds/soccer.wbt', 'r').readlines()
+    position = [random_position[-1], random_position[0]] + random_position[1:num_enemy+1]
+    updated_file = open(world_file_path, 'r').readlines()
     for i in range(len(line_index)):
-        if lines[line_index[i]-1].find('translation') != -1:
-            lines[line_index[i]-1] = f'  translation {x_[i]} {y_[i]} {0.236 if i != 0 else 0.03}\n'
-    file = open('../webots_ws/worlds/soccer.wbt', 'w')
-    file.writelines(lines)
-    file.close()
+        if updated_file[line_index[i]-1].find('translation') != -1:
+            updated_file[line_index[i]-1] = f'  translation {position[i][0]} {position[i][1]} {0.236 if i != 0 else 0.03}\n'
+    # updated world file
+    world_file = open(world_file_path, 'w')
+    world_file.writelines(updated_file)
+    world_file.close()
 
-    # position csv
-    file = open('../data/position.csv', 'w')
-    writer = csv.writer(file)
-    writer.writerows(np.array([x_, y_]).T)
+    # generate json
+    data = {
+        'ball': None,
+        'robot': None,
+        'enemy': [],
+    }
+    for i in range(len(line_index)):
+        # read position value
+        coordinate = {
+            'x': position[i][0],
+            'y': position[i][1],
+        }
+        if i == 0: # ball
+            data['ball'] = coordinate
+        elif i == 1: # robot
+            data['robot'] = coordinate
+        else: # enemy
+            data['enemy'].append(coordinate)
+    position_file = open(position_file_path, 'w')
+    json_object = json.dumps(data)
+    position_file.write(json_object)
 
-def generate_position_from_world():
+# update position file from world file
+def get_position_from_world():
     # [ball, myRobot, enemy1, enemy2, enemy3, enemy4, enemy5]
     line_index = [32, 36, 52, 66, 80, 94, 108]
-    lines = open('../webots_ws/worlds/soccer.wbt', 'r').readlines()
-    position = []
+    # open world file
+    world_file = open(world_file_path, 'r').readlines()
+    # format position_file_pathta
+    data = {
+        'ball': None,
+        'robot': None,
+        'enemy': [],
+    }
     for i in range(len(line_index)):
-        temp_data = lines[line_index[i]-1].split()
-        position.append([temp_data[1], temp_data[2]])
+        # read position value
+        value = world_file[line_index[i]-1].split()
+        coordinate = {
+            'x': float(value[1]),
+            'y': float(value[2]),
+        }
+        if i == 0: # ball
+            data['ball'] = coordinate
+        elif i == 1: # robot
+            data['robot'] = coordinate
+        else: # enemy
+            data['enemy'].append(coordinate)
 
-    # position csv
-    file = open('../data/position.csv', 'w')
-    writer = csv.writer(file)
-    writer.writerows(np.array(position))
+    # generate json
+    json_object = json.dumps(data, indent=4)
+    position_file = open(position_file_path, 'w')
+    position_file.write(json_object)
 
 args = sys.argv[1]
 if args == 'plot':
-    generate_plot()
+    draw_position()
 elif args == 'world':
-    generate_world()
+    update_world_position()
 elif args == 'copy':
-    generate_position_from_world()
+    get_position_from_world()
 else:
     print("input format generate.py [plot|world|copy] [null|0-5]")

@@ -4,38 +4,39 @@
 #include <RobotisOp2GaitManager.hpp>
 #include <RobotisOp2MotionManager.hpp>
 
-#include <webots/Accelerometer.hpp>
-#include <webots/Gyro.hpp>
 #include <webots/Keyboard.hpp>
 #include <webots/Motor.hpp>
 #include <webots/PositionSensor.hpp>
 #include <webots/Robot.hpp>
+#include <webots/Gyro.hpp>
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
 
 #include <vector>
+#include <string>
 
 using namespace std;
 
 class RobotController {
     public:
-    RobotController();
-    void run(bool start);
-    void setVel(double x, double a);
+        RobotController(string type="other");
+        ~RobotController();
+        void run(bool start);
+        void setVel(double x, double a);
 
-    void robotStep();
-    void fallen();
-    void manualController();
+        void robotStep();
+        void manualController();
 
-    double getDirInRadian();
-    double getDirInDegree();
-    pair<double, double> getPosition();
+        double getDirInRadian();
+        double getDirInDegree();
+        pair<double, double> getPosition();
+        
+        webots::Robot *robot;
 
     private:
         int timeStep;
+        string robot_type;
         
-        webots::Robot *robot;
-        webots::Accelerometer *accelerometer;
         webots::Gyro *gyro;
         webots::Keyboard *keyboard;
         webots::GPS *gps;

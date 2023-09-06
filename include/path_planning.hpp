@@ -2,48 +2,63 @@
 #define __PATH_PLANNING_HPP__
 
 #include <vector>
+#include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <fstream>
+#include <nlohmann/json.hpp>
 
 using namespace std;
+using nlohmann::json;
 
 struct Coordinate {
-    int x, y;
-    bool operator==(const Coordinate&);
-    Coordinate operator+(const Coordinate&);
+    double x, y;
+
+    bool operator==(Coordinate);
+    Coordinate operator+(Coordinate);
+    Coordinate operator-(Coordinate);
+    Coordinate operator*(double);
+    double dot(Coordinate);
+    double len();
 };
+ostream& operator<<(ostream &os, Coordinate coord);
 
 struct Node {
-    int G, H;
+    double G, H;
     Coordinate coordinate;
     Node *parent;
 
     Node(Coordinate coord_, Node* parent_=nullptr);
-    int getScore();
+    double getScore();
 };
 
 
 class PathPlanning {
     public:
         PathPlanning();
-        pair<int, int> getStart();
-        pair<int, int> getGoal();
-        vector<pair<int, int>> getEnemy();
-        vector<pair<int, int>> getCollision();
-        vector<pair<int, int>> getPath();
-        vector<pair<int, int>> getBezierPath();
+        pair<double, double> getStart();
+        pair<double, double> getGoal();
+        vector<pair<double, double>> getEnemy();
+        vector<pair<double, double>> getCollision();
+        vector<pair<double, double>> getPath();
+        vector<pair<double, double>> getBezierPath();
 
     private:
         Coordinate start, goal;
         vector<Coordinate> enemy, walls, path, bezier_path;
 
+        double HEIGHT, WIDTH, NODE_DISTANCE, ENEMY_RADIUS;
+     
+        Coordinate transformPoint(Coordinate);
+        double heuristic(Coordinate, Coordinate, int);
+        bool detectCollision(Coordinate);
+        vector<Coordinate> getNeighbors(Coordinate);
+        Node* findNodeOnList(vector<Node*>&, Coordinate);
+        void releaseNodes(vector<Node*>&);
+        
         vector<Coordinate> findPath();
         vector<Coordinate> generateBezier(int);
-        
-        float heuristic(Coordinate&, Coordinate&, int);
-        bool detectCollision(Coordinate&);
-        vector<Coordinate> getNeighbors(Coordinate&);
-        Node* findNodeOnList(vector<Node*>&, Coordinate&);
-        void releaseNodes(vector<Node*>&);
-        Coordinate transformPoint(vector<double>&);
+
         Coordinate calculateBezierPoint(double);
 };
 

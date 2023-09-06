@@ -1,55 +1,77 @@
 #include "path_planning.hpp"
-#include "constants.hpp"
 
-#include <algorithm>
-#include <cmath>
-#include <iostream>
-#include <limits.h>
-#include <fstream>
-#include <sstream>
-
-bool Coordinate::operator==(const Coordinate& coord_) {
-    return (x == coord_.x && y == coord_.y);
+// Coordinate struct
+bool Coordinate::operator==(Coordinate coord) {
+    return (x == coord.x && y == coord.y);
 }
 
-Coordinate Coordinate::operator+(const Coordinate& coord_) {
-    return {x + coord_.x, y + coord_.y};
+Coordinate Coordinate::operator+(Coordinate coord) {
+    return {x + coord.x, y + coord.y};
 }
 
+Coordinate Coordinate::operator-(Coordinate coord) {
+    return {x - coord.x, y - coord.y};
+}
+
+Coordinate Coordinate::operator*(double scalar) {
+    return {x * scalar, y * scalar};
+}
+
+double Coordinate::dot(Coordinate coord) {
+    return x * coord.x + y * coord.y;
+}
+
+double Coordinate::len() {
+    return sqrt(x * x + y * y);
+}
+
+ostream& operator<<(ostream& os, Coordinate coord) {
+    return os << "{" << coord.x << "," << coord.y << "}";
+}
+
+// Node class
 Node::Node(Coordinate coordinate_, Node* parent_) {
     parent = parent_;
     coordinate = coordinate_;
     G = H = 0;
 }
 
-int Node::getScore(){
+double Node::getScore(){
     return G + H; 
 }
 
 PathPlanning::PathPlanning() {
-    vector<vector<double>> points;
-    fstream file(Constants::positionFile, ios::in);
-    string line, x, y;
-    if (file.is_open()) {
-        while (getline(file, line)) {
-            stringstream str(line);
-            getline(str, x, ',');
-            getline(str, y, ',');
-            points.push_back(vector<double>{stod(x), stod(y)});
-        }
-    }
-    start = transformPoint(points[1]);
-    goal = transformPoint(points[0]);
-    for (int i = 2; i <= 6; i++) {
-        enemy.push_back(transformPoint(points[i]));
+    ifstream position_file("config/position.json");
+    json data = json::parse(position_file);
+    // initialize data
+    start = transformPoint(Coordinate{
+        data["robot"]["x"].template get<double>(),
+        data["robot"]["y"].template get<double>()
+    });
+    goal = transformPoint(Coordinate{
+        data["ball"]["x"].template get<double>(),
+        data["ball"]["y"].template get<double>()
+    });
+    for (auto &item : data["enemy"]) {
+        enemy.push_back(transformPoint(Coordinate{
+            item["x"].template get<double>(),
+            item["y"].template get<double>()
+        }));
     }
 
-    for (int x = Constants::NODE_DISTANCE; x < Constants::WIDTH; x += Constants::NODE_DISTANCE) {
-      for (int y = Constants::NODE_DISTANCE; y < Constants::HEIGHT; y += Constants::NODE_DISTANCE) {
+    ifstream global_file("config/global.json");
+    json global = json::parse(global_file);
+    HEIGHT = global["screen_height"].template get<double>();
+    WIDTH = global["screen_width"].template get<double>();
+    NODE_DISTANCE = global["node_distance"].template get<double>();
+    ENEMY_RADIUS = global["enemy_radius"].template get<double>();
+
+    for (int x = NODE_DISTANCE; x < WIDTH; x += NODE_DISTANCE) {
+      for (int y = NODE_DISTANCE; y < HEIGHT; y += NODE_DISTANCE) {
         for (auto item : enemy) {
           double dis = std::sqrt(pow(x - item.x, 2) + pow(y - item.y, 2));
-          if (dis < 50.0){
-            walls.push_back(Coordinate{x, y});
+          if (dis < ENEMY_RADIUS){
+            walls.push_back(Coordinate{static_cast<double>(x), static_cast<double>(y)});
           }
         }
       }
@@ -59,129 +81,127 @@ PathPlanning::PathPlanning() {
     bezier_path = generateBezier(100);
 }
 
-pair<int, int> PathPlanning::getStart() {
-    return pair<int, int>{start.x, start.y};
+pair<double, double> PathPlanning::getStart() {
+    return pair<double, double>{start.x, start.y};
 }
 
-pair<int, int> PathPlanning::getGoal() {
-    return pair<int, int>{goal.x, goal.y};
+pair<double, double> PathPlanning::getGoal() {
+    return pair<double, double>{goal.x, goal.y};
 }
 
-vector<pair<int, int>> PathPlanning::getEnemy() {
-    vector<pair<int, int>> result;
+vector<pair<double, double>> PathPlanning::getEnemy() {
+    vector<pair<double, double>> result;
     for (auto &item : enemy) {
-        result.push_back(pair<int, int>{item.x, item.y});
+        result.push_back(pair<double, double>{item.x, item.y});
     }
     return result;
 }
 
-vector<pair<int, int>> PathPlanning::getCollision() {
-    vector<pair<int, int>> result;
+vector<pair<double, double>> PathPlanning::getCollision() {
+    vector<pair<double, double>> result;
     for (auto &item : walls) {
-        result.push_back(pair<int, int>{item.x, item.y});
+        result.push_back(pair<double, double>{item.x, item.y});
     }
     return result;
 }
 
-vector<pair<int, int>> PathPlanning::getPath() {
-    vector<pair<int, int>> result;
+vector<pair<double, double>> PathPlanning::getPath() {
+    vector<pair<double, double>> result;
     for (auto &item : path) {
-        result.push_back(pair<int, int>{item.x, item.y});
+        result.push_back(pair<double, double>{item.x, item.y});
     }
     return result;
 }
 
-vector<pair<int, int>> PathPlanning::getBezierPath() {
-    vector<pair<int, int>> result;
+vector<pair<double, double>> PathPlanning::getBezierPath() {
+    vector<pair<double, double>> result;
     for (auto &item : bezier_path) {
-        result.push_back(pair<int, int>{item.x, item.y});
+        result.push_back(pair<double, double>{item.x, item.y});
     }
     return result;
 }
 
-float PathPlanning::heuristic(Coordinate& source_, Coordinate& target_, int type) {
+Coordinate PathPlanning::transformPoint(Coordinate coord) {
+    double x = (coord.x + 4.5) * 100;
+    double y = (coord.y + 3) * 100;
+    return Coordinate{x, y};
+}
+
+double PathPlanning::heuristic(Coordinate source, Coordinate target, int type) {
     switch (type) {
     case 1: // manhatan
-        return static_cast<float>(abs(target_.x-source_.x) + abs(target_.y-source_.y));
+        return abs(target.x-source.x) + abs(target.y-source.y);
         break;
     case 2: // diagonal
-        return static_cast<float>(max(abs(target_.x-source_.x), abs(target_.y-source_.y)));
+        return max(abs(target.x-source.x), abs(target.y-source.y));
         break;
     case 3: // octile
-        return static_cast<float>(
-            max(abs(target_.x-source_.x), abs(target_.y-source_.y)) +
-            (sqrt(2)-1) * min(abs(target_.x-source_.x), abs(target_.y-source_.y))
-        );
+        return max(abs(target.x-source.x), abs(target.y-source.y)) +
+            (sqrt(2)-1) * min(abs(target.x-source.x), abs(target.y-source.y));
         break;
     default: // euclidean
-        return static_cast<float>(sqrt(pow(target_.x-source_.x, 2) + pow(target_.y-source_.y, 2)));
+        return sqrt(pow(target.x-source.x, 2) + pow(target.y-source.y, 2));
         break;
     }
 }
 
-bool PathPlanning::detectCollision(Coordinate& coord_) {
-    if (coord_.x < 0 || coord_.x >= Constants::WIDTH ||
-        coord_.y < 0 || coord_.y >= Constants::HEIGHT ||
-        std::find(walls.begin(), walls.end(), coord_) != walls.end()) {
+bool PathPlanning::detectCollision(Coordinate coord) {
+    if (coord.x < 0 || coord.x >= WIDTH ||
+        coord.y < 0 || coord.y >= HEIGHT ||
+        std::find(walls.begin(), walls.end(), coord) != walls.end()) {
         return true;
     }
     return false;
 }
 
-vector<Coordinate> PathPlanning::getNeighbors(Coordinate& coord_) {
-    int temp_x = (int)(start.x / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
-    int temp_y = (int)(start.y / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
+vector<Coordinate> PathPlanning::getNeighbors(Coordinate coord) {
+    double temp_x = (int)(start.x / NODE_DISTANCE) * NODE_DISTANCE;
+    double temp_y = (int)(start.y / NODE_DISTANCE) * NODE_DISTANCE;
     vector<Coordinate> start_area {
         Coordinate{temp_x, temp_y},
-        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y},
-        Coordinate{temp_x, temp_y+Constants::NODE_DISTANCE},
-        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y+Constants::NODE_DISTANCE},
+        Coordinate{temp_x+NODE_DISTANCE, temp_y},
+        Coordinate{temp_x, temp_y+NODE_DISTANCE},
+        Coordinate{temp_x+NODE_DISTANCE, temp_y+NODE_DISTANCE},
     };
-    temp_x = (int)(goal.x / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
-    temp_y = (int)(goal.y / Constants::NODE_DISTANCE) * Constants::NODE_DISTANCE;
+    temp_x = (int)(goal.x / NODE_DISTANCE) * NODE_DISTANCE;
+    temp_y = (int)(goal.y / NODE_DISTANCE) * NODE_DISTANCE;
     vector<Coordinate> goal_area {
         Coordinate{temp_x, temp_y},
-        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y},
-        Coordinate{temp_x, temp_y+Constants::NODE_DISTANCE},
-        Coordinate{temp_x+Constants::NODE_DISTANCE, temp_y+Constants::NODE_DISTANCE},
+        Coordinate{temp_x+NODE_DISTANCE, temp_y},
+        Coordinate{temp_x, temp_y+NODE_DISTANCE},
+        Coordinate{temp_x+NODE_DISTANCE, temp_y+NODE_DISTANCE},
     };
     vector<Coordinate> directions = {
         { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 },
-        // { -1, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 }
+        { -1, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 }
     };
     for (auto &item : directions) {
-        item.x = coord_.x + item.x * Constants::NODE_DISTANCE;
-        item.y = coord_.y + item.y * Constants::NODE_DISTANCE;
+        item.x = coord.x + item.x * NODE_DISTANCE;
+        item.y = coord.y + item.y * NODE_DISTANCE;
     }
-    if (coord_ == start) {
+    if (coord == start) {
         return start_area;
-    } else if (std::find(start_area.begin(), start_area.end(), coord_) != start_area.end()) {
+    } else if (std::find(start_area.begin(), start_area.end(), coord) != start_area.end()) {
         directions.push_back(start);
-    } else if (std::find(goal_area.begin(), goal_area.end(), coord_) != goal_area.end()) {
+    } else if (std::find(goal_area.begin(), goal_area.end(), coord) != goal_area.end()) {
         directions.push_back(goal);
     }
     return directions;
     
 }
 
-Node* PathPlanning::findNodeOnList(vector<Node*>& nodes_, Coordinate& coordinate_) {
-    for (auto node : nodes_) {
-        if (node->coordinate == coordinate_) {
+Node* PathPlanning::findNodeOnList(vector<Node*>& nodes, Coordinate coordinate) {
+    for (auto node : nodes) {
+        if (node->coordinate == coordinate) {
             return node;
         }
     }
     return nullptr;
 }
 
-void PathPlanning::releaseNodes(vector<Node*>& nodes_) {
-    for (int i = 0; i < nodes_.size(); i++)
-        delete nodes_[i];
-}
-
-Coordinate PathPlanning::transformPoint(vector<double>& point) {
-    int x = (point[0] + 4.5) * 100;
-    int y = (point[1] + 3) * 100;
-    return Coordinate{x, y};
+void PathPlanning::releaseNodes(vector<Node*>& nodes) {
+    for (int i = 0; i < nodes.size(); i++)
+        delete nodes[i];
 }
 
 vector<Coordinate> PathPlanning::findPath() {
@@ -252,7 +272,7 @@ vector<Coordinate> PathPlanning::generateBezier(int numPoints) {
 Coordinate PathPlanning::calculateBezierPoint(double t) {
     vector<pair<double, double>> points;
     for (auto &point : path) {
-        points.push_back(pair<double, double>{static_cast<double>(point.x), static_cast<double>(point.y)});
+        points.push_back(pair<double, double>{point.x, point.y});
     }
     int n = points.size() - 1;
 
@@ -263,5 +283,5 @@ Coordinate PathPlanning::calculateBezierPoint(double t) {
         }
     }
 
-    return Coordinate{static_cast<int>(points[0].first), static_cast<int>(points[0].second)};
+    return Coordinate{points[0].first, points[0].second};
 }

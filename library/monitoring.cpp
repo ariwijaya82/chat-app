@@ -1,5 +1,4 @@
 #include "monitoring.hpp"
-#include "constants.hpp"
 
 Monitoring::Monitoring(int timeStep){
     setFixedSize(940, 640);
@@ -8,39 +7,47 @@ Monitoring::Monitoring(int timeStep){
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &Monitoring::updateDisplay);
     timer->start(timeStep);
+
+    ifstream global_file("config/global.json");
+    json global = json::parse(global_file);
+    HEIGHT = global["screen_height"].template get<double>();
+    WIDTH = global["screen_width"].template get<double>();
+    PADDING = global["screen_padding"].template get<double>();
+    NODE_DISTANCE = global["node_distance"].template get<double>();
+    ENEMY_RADIUS = global["enemy_radius"].template get<double>();
 }
 
-QPointF Monitoring::transformPoint(pair<int, int> point) {
-    return QPointF{(double)(point.first + Constants::PADDING), (double)(Constants::HEIGHT + Constants::PADDING - point.second)};
+QPointF Monitoring::transformPoint(pair<double, double> point) {
+    return QPointF{point.first + PADDING, HEIGHT + PADDING - point.second};
 }
 
-void Monitoring::setRobotPosition(pair<int, int> point) {
+void Monitoring::setRobotPosition(pair<double, double> point) {
     robot = transformPoint(point);
 }
 
-void Monitoring::setBallPosition(pair<int, int> point) {
+void Monitoring::setBallPosition(pair<double, double> point) {
     ball = transformPoint(point);
 }
 
-void Monitoring::setEnemyPosition(vector<pair<int, int>> points) {
+void Monitoring::setEnemyPosition(vector<pair<double, double>> points) {
     for (auto item : points) {
         enemy.push_back(transformPoint(item));
     }
 }
 
-void Monitoring::setCollision(vector<pair<int, int>> points) {
+void Monitoring::setCollision(vector<pair<double, double>> points) {
     for (auto item : points) {
         collision.push_back(transformPoint(item));
     }
 }
 
-void Monitoring::setPath(vector<pair<int, int>> points) {
+void Monitoring::setPath(vector<pair<double, double>> points) {
     for (auto item : points) {
         path.push_back(transformPoint(item));
     }
 }
 
-void Monitoring::setBezierPath(vector<pair<int, int>> points) {
+void Monitoring::setBezierPath(vector<pair<double, double>> points) {
     for (auto item : points) {
         bezier_path.push_back(transformPoint(item));
     }
@@ -50,7 +57,7 @@ void Monitoring::setRobotDirection(double dir) {
     direction = dir;
 }
 
-void Monitoring::setTarget(pair<int, int> point) {
+void Monitoring::setTarget(pair<double, double> point) {
     target = transformPoint(point);
 }
 
@@ -102,14 +109,14 @@ void Monitoring::paintEvent(QPaintEvent*) {
         painter.setBrush(Qt::red);
         painter.drawEllipse(enemy[i], 10, 10);
         painter.setBrush(Qt::NoBrush);
-        painter.drawEllipse(enemy[i], 50, 50);
+        painter.drawEllipse(enemy[i], ENEMY_RADIUS, ENEMY_RADIUS);
     }
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(Qt::yellow);
-    for (int x = Constants::NODE_DISTANCE; x < Constants::WIDTH; x += Constants::NODE_DISTANCE) {
-      for (int y = Constants::NODE_DISTANCE; y < Constants::HEIGHT; y += Constants::NODE_DISTANCE) {
-        painter.drawEllipse(transformPoint(pair<int, int>{x, y}), 2, 2);
+    for (int x = NODE_DISTANCE; x < WIDTH; x += NODE_DISTANCE) {
+      for (int y = NODE_DISTANCE; y < HEIGHT; y += NODE_DISTANCE) {
+        painter.drawEllipse(transformPoint(pair<double, double>{x, y}), 2, 2);
       }
     }
     painter.setBrush(Qt::red);

@@ -7,14 +7,18 @@ static const char *motorNames[20] = {
   "AnkleL" /*ID16*/,    "FootR" /*ID17*/,     "FootL" /*ID18*/,     "Neck" /*ID19*/,      "Head" /*ID20*/
 };
 
-RobotController::RobotController() {
+RobotController::RobotController(string type) {
     robot = new webots::Robot();
     timeStep = robot->getBasicTimeStep();
 
-    accelerometer = robot->getAccelerometer("Accelerometer");
-    gyro = robot->getGyro("Gyro");
+    robot_type = type;
+    if (type == "main") {
+        compass = robot->getCompass("compass");
+        compass->enable(timeStep);
+    }
+
     gps = robot->getGPS("gps");
-    compass = robot->getCompass("compass");
+    gyro = robot->getGyro("Gyro");
     keyboard = robot->getKeyboard();
     for (int i = 0; i < 20; i++) {
         std::string sensorName = motorNames[i];
@@ -22,18 +26,29 @@ RobotController::RobotController() {
         positionSensors[i] = robot->getPositionSensor(sensorName);
         positionSensors[i]->enable(timeStep);
     }
-    accelerometer->enable(timeStep);
-    gyro->enable(timeStep);
     gps->enable(timeStep);
-    compass->enable(timeStep);
+    gyro->enable(timeStep);
     keyboard->enable(timeStep);
 
     motionManager = new managers::RobotisOp2MotionManager(robot);
-    gaitManager = new managers::RobotisOp2GaitManager(robot, "../data/config.ini");
+    gaitManager = new managers::RobotisOp2GaitManager(robot, "../config/walking.ini");
 
     robot->step(timeStep);
     motionManager->playPage(9);
     wait(200);
+}
+
+RobotController::~RobotController() {
+    delete robot;
+    delete keyboard;
+    delete gps;
+    delete compass;
+    delete gyro;
+    delete motionManager;
+    delete gaitManager;
+    for (int i = 0; i < 20; i++) {
+        delete positionSensors[i];
+    }
 }
 
 void RobotController::run(bool start) {
@@ -51,33 +66,6 @@ void RobotController::robotStep() {
     gaitManager->step(timeStep);
 }
 
-void RobotController::fallen() {
-    static int fup = 0;
-    static int fdown = 0;
-    static const double acc_tolerance = 80.0;
-    static const double acc_step = 100;
-
-    const double *acc = accelerometer->getValues();
-    if (acc[1] < 512.0 - acc_tolerance)
-        fup++;
-    else
-        fup = 0;
-
-    if (acc[1] > 512.0 + acc_tolerance)
-        fdown++;
-    else
-        fdown = 0;
-
-    if (fup > acc_step) {
-        motionManager->playPage(10);  // f_up
-        motionManager->playPage(9);   // init position
-        fup = 0;
-    } else if (fdown > acc_step) {
-        motionManager->playPage(11);  // b_up
-        motionManager->playPage(9);   // init position
-        fdown = 0;
-    }
-}
 
 void RobotController::manualController() {
     int key;
@@ -105,11 +93,14 @@ void RobotController::manualController() {
     }
 }
 
-double RobotController::getDirInRadian() {    
-    double dir = atan2(compass->getValues()[1], compass->getValues()[0]);
-    dir -= M_PI/2;
-    if (dir < -M_PI) dir += M_PI*2;
-    return dir;
+double RobotController::getDirInRadian() {   
+    if (robot_type == "main") {
+        double dir = atan2(compass->getValues()[1], compass->getValues()[0]);
+        dir -= M_PI/2;
+        if (dir < -M_PI) dir += M_PI*2;
+        return dir;
+    }
+    return 0.0;
 }
 
 double RobotController::getDirInDegree() {    

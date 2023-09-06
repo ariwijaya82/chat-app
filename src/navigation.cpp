@@ -16,14 +16,14 @@ int main(int argc, char** argv) {
     monitor->show();
 
     // initialize robot controller
-    RobotController* controller = new RobotController();
+    RobotController* controller = new RobotController("main");
 
     // Calculate Path
     PathPlanning* generator = new PathPlanning();
 
     // Draw Path
-    vector<pair<int, int>> bezier_path = generator->getBezierPath();
-    vector<pair<int, int>> path = generator->getPath();
+    vector<pair<double, double>> bezier_path = generator->getBezierPath();
+    vector<pair<double, double>> path = generator->getPath();
     monitor->setTarget(generator->getStart());
     monitor->setRobotPosition(generator->getStart());
     monitor->setBallPosition(generator->getGoal());
@@ -37,7 +37,6 @@ int main(int argc, char** argv) {
     bool isControl = false;
     int key, index = 0;
     while(true) {
-      controller->fallen();
       controller->setVel(0,0);
 
       // update position adn direction in radian
@@ -84,5 +83,11 @@ int main(int argc, char** argv) {
       controller->robotStep();
       app->processEvents();
     }
+
+    delete app;
+    delete monitor;
+    delete controller;
+    delete generator;
+    return 0;
 }
 
