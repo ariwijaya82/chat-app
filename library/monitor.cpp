@@ -307,5 +307,59 @@ void Monitor::clearPath() {
 }
 
 void Monitor::updateWorldFile() {
-    fstream file("webots_ws/worlds/soccer.wbt");
+    string world_path = "webots_ws/worlds/soccer.wbt";
+    string json_path = "config/position.json";
+    
+    ifstream world_file_input(world_path.c_str());
+    vector<string> lines;
+    string line;
+    while (getline(world_file_input, line)) {
+        lines.push_back(line);
+    }
+    world_file_input.close();
+    vector<int> update_line{31, 35, 51, 60, 69, 78, 87};
+    auto update_string_position = [&](string pos_str, QPointF pos) {
+        stringstream ss(pos_str);
+        vector<string> nums;
+        string num;
+
+        while (ss >> num) {
+            nums.push_back(num);
+        }
+
+        double x_ = (pos.x() - PADDING - 450) / 100;
+        double y_ = (HEIGHT + PADDING - pos.y() - 300) / 100;
+        
+        stringstream result;
+        result << "  " << nums[0] << " " << x_ << " " << y_ << " " << nums[3];
+        return result.str();
+    };
+
+    lines[update_line[0]] = update_string_position(lines[update_line[0]], ball);
+    lines[update_line[1]] = update_string_position(lines[update_line[1]], robot);
+    for (size_t i = 2; i < update_line.size(); i++) {
+        lines[update_line[i]] = update_string_position(lines[update_line[i]], enemies[i-2]);
+    }
+
+    ofstream world_file_output(world_path.c_str());
+    for (auto line : lines) {
+        world_file_output << line << endl;
+    }
+    world_file_output.close();
+
+    ofstream json_file(json_path.c_str());
+    auto convert_position_to_json = [&](QPointF pos) {
+        json data;
+        data["x"] = (pos.x() - PADDING - 450) / 100;
+        data["y"] = (HEIGHT + PADDING - pos.y() - 300) / 100;
+        return data;
+    };
+    json json_data;
+    json_data["robot"] = convert_position_to_json(robot);
+    json_data["ball"] = convert_position_to_json(ball);
+    for (qsizetype i = 0; i < enemies.size(); i++) {
+        json_data["enemies"].push_back(convert_position_to_json(enemies[i]));
+    }
+    json_file << json_data;
+    json_file.close();
 }
