@@ -1,5 +1,6 @@
-#include "path_planning.hpp"
-#include "monitoring.hpp"
+#include "path_generator.hpp"
+#include "monitor.hpp"
+#include "utils.hpp"
 
 // #include <iostream>
 // #include <fstream>
@@ -10,23 +11,15 @@
 
 int main(int argc, char** argv) {
     QApplication* app = new QApplication(argc, argv);
-    Monitoring* monitor = new Monitoring();
+    Monitor* monitor = new Monitor();
     monitor->show();
 
     // Calculate Path
-    PathPlanning* generator = new PathPlanning();
+    // PathGenerator* generator = new PathGenerator();
 
     // Draw Path
-    vector<pair<double, double>> bezier_path = generator->getBezierPath();
-    vector<pair<double, double>> path = generator->getPath();
-    monitor->setTarget(generator->getStart());
-    monitor->setRobotPosition(generator->getStart());
-    monitor->setBallPosition(generator->getGoal());
-    monitor->setEnemyPosition(generator->getEnemy());
-    monitor->setCollision(generator->getCollision());
-    monitor->setPath(path);
-    monitor->setBezierPath(bezier_path);
-    monitor->setRobotDirection(0);
+    // monitor->setAStarPath(generator->astar_path);
+    // monitor->setBezierPath(generator->bezier_path);
 
     return app->exec();
 

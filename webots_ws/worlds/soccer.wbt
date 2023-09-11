@@ -16,8 +16,8 @@ WorldInfo {
   basicTimeStep 16
 }
 Viewpoint {
-  orientation 0.08689635360017858 0.9771368932489353 -0.1940425612663673 0.8594356772912093
-  position -7.866214105692883 1.3333834426337565 8.949582447552666
+  orientation -0.05585737660688838 0.9910217510322628 0.1214736286588325 0.8689162674241423
+  position -8.560926749956002 -0.5234402834918117 7.627870262924557
   follow "myRobot"
 }
 TexturedBackground {
@@ -56,11 +56,6 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
-  bodySlot [
-    GPS {
-      rotation 0 0 1 -1.5707
-    }
-  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
   translation -1.9614881518191383 1.9975427206271696 0.236
@@ -70,11 +65,6 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
-  bodySlot [
-    GPS {
-      rotation 0 0 1 -1.5707
-    }
-  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
   translation -1.8712203392187945 0.5891855990515751 0.236
@@ -84,11 +74,6 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
-  bodySlot [
-    GPS {
-      rotation 0 0 1 -1.5707
-    }
-  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
   translation 1.7106146225169176 1.0875167421045773 0.236
@@ -98,11 +83,6 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
-  bodySlot [
-    GPS {
-      rotation 0 0 1 -1.5707
-    }
-  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
   translation 1.7205491408833145 -0.1706943979316935 0.236
@@ -112,11 +92,6 @@ DEF ROBOTISOP2 RobotisOp2 {
   plasticColor 0 0 0
   jersey RobotisJersey {
   }
-  bodySlot [
-    GPS {
-      rotation 0 0 1 -1.5707
-    }
-  ]
 }
 RobocupSoccerField {
   size "kid"

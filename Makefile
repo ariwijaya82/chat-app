@@ -11,23 +11,29 @@ LIBRARIES = -L"$(RESOURCES_PATH)/libraries/robotis-op2" -lrobotis-op2 \
 			-L"$(WEBOTS_HOME)/lib/controller" -lCppController -lController \
 			-lQt6Widgets -lQt6Core -lQt6Gui
 
-FLAGS = -fPIC
+SRC_DIR = library
+OBJ_DIR = build
 
-LIB_SRC = $(wildcard library/*.cpp)
+CXX = g++
+FLAGS = -fPIC -Wall
+SRC = $(wildcard $(SRC_DIR)/*.cpp)
+OBJ = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRC))
 
 all: navigation standing testing
 
-navigation: $(LIB_SRC) src/navigation.cpp
+navigation: $(OBJ) src/navigation.cpp
 	mkdir -p build
-	g++ $(FLAGS) $^ -o ./build/navigation $(INCLUDE) $(LIBRARIES)
+	$(CXX) $(FLAGS) $^ -o ./build/navigation $(INCLUDE) $(LIBRARIES)
 
-standing: $(LIB_SRC) src/standing.cpp
-	mkdir -p webots_ws/controllers/standing
-	g++ $(FLAGS) $^ -o ./webots_ws/controllers/standing/standing $(INCLUDE) $(LIBRARIES)
+standing: $(OBJ) src/standing.cpp
+	$(CXX) $(FLAGS) $^ -o ./webots_ws/controllers/standing/standing $(INCLUDE) $(LIBRARIES)
 
-testing: $(LIB_SRC) src/testing.cpp
-	mkdir -p build
-	g++ $(FLAGS) $^ -o ./build/testing $(INCLUDE) $(LIBRARIES)
+testing: $(OBJ) src/testing.cpp
+	$(CXX) $(FLAGS) $^ -o ./build/testing $(INCLUDE) $(LIBRARIES)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	mkdir -p build webots_ws/controllers/standing
+	$(CXX) $(FLAGS) -c $< -o $@ $(INCLUDE) $(LIBRARIES)
 
 run:
 	./build/navigation

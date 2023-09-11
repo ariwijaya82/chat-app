@@ -1,5 +1,5 @@
-#ifndef __ROBOT_CONTROLLER_HPP__
-#define __ROBOT_CONTROLLER_HPP__
+#ifndef __CONTROLLER_HPP__
+#define __CONTROLLER_HPP__
 
 #include <RobotisOp2GaitManager.hpp>
 #include <RobotisOp2MotionManager.hpp>
@@ -15,12 +15,14 @@
 #include <vector>
 #include <string>
 
+#include "utils.hpp"
+
 using namespace std;
 
-class RobotController {
+class Controller {
     public:
-        RobotController(string type="other");
-        ~RobotController();
+        Controller(string type="other");
+        ~Controller();
         void run(bool start);
         void setVel(double x, double a);
 
@@ -29,7 +31,8 @@ class RobotController {
 
         double getDirInRadian();
         double getDirInDegree();
-        pair<double, double> getPosition();
+        Vec getPosition();
+        int getTimeStep();
         
         webots::Robot *robot;
 

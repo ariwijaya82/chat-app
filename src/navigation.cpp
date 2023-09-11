@@ -1,6 +1,7 @@
-#include "robot_controller.hpp"
-#include "path_planning.hpp"
-#include "monitoring.hpp"
+#include "controller.hpp"
+#include "path_generator.hpp"
+#include "monitor.hpp"
+#include "utils.hpp"
 
 double smoothValue(double value, double min_input, double max_input, double min_output, double max_output) {
   double clamp_value = value;
@@ -10,38 +11,28 @@ double smoothValue(double value, double min_input, double max_input, double min_
 }
 
 int main(int argc, char** argv) {
-    // initialize QT
+    // initialize controller
+    Controller* controller = new Controller("main");
+
+    // initialize monitor
     QApplication* app = new QApplication(argc, argv);
-    Monitoring* monitor = new Monitoring();
+    Monitor* monitor = new Monitor(controller->robot->getBasicTimeStep(), "main");
     monitor->show();
 
-    // initialize robot controller
-    RobotController* controller = new RobotController("main");
-
-    // Calculate Path
-    PathPlanning* generator = new PathPlanning();
-
-    // Draw Path
-    vector<pair<double, double>> bezier_path = generator->getBezierPath();
-    vector<pair<double, double>> path = generator->getPath();
-    monitor->setTarget(generator->getStart());
-    monitor->setRobotPosition(generator->getStart());
-    monitor->setBallPosition(generator->getGoal());
-    monitor->setEnemyPosition(generator->getEnemy());
-    monitor->setCollision(generator->getCollision());
-    monitor->setPath(path);
-    monitor->setBezierPath(bezier_path);
+    // initialize path generator
+    PathGenerator* generator = new PathGenerator();
+    monitor->setAStarPath(generator->astar_path);
+    monitor->setBezierPath(generator->bezier_path);
 
     // Update Process
     bool isWalking = false;
     bool isControl = false;
-    int key, index = 0;
+    size_t index = 0;
     while(true) {
       controller->setVel(0,0);
 
       // update position adn direction in radian
-      auto gps_value = controller->getPosition();
-      pair<int, int> robot_position{(gps_value.first + 4.5) * 100, (gps_value.second + 3) * 100};
+      Vec robot_position = controller->getPosition();
       monitor->setRobotPosition(robot_position);
       monitor->setRobotDirection(controller->getDirInRadian());
 
@@ -53,25 +44,25 @@ int main(int argc, char** argv) {
           isWalking = true;
         }
 
-        pair<int, int> target = bezier_path[index];
-        double distance = sqrt(pow(target.first - robot_position.first, 2) + pow(target.second - robot_position.second, 2));
-        int next_index = 0;
-        while (distance < 40 && index + next_index < bezier_path.size()) {
-          pair<int, int> next_target = bezier_path[index+next_index];
-          distance = sqrt(pow(next_target.first - robot_position.first, 2) + pow(next_target.second - robot_position.second, 2));
+        Vec target = generator->bezier_path[index];
+        double distance = (target - robot_position).len();
+        size_t next_index = 0;
+        while (distance < 40 && index + next_index < generator->bezier_path.size()) {
+          Vec next_target = generator->bezier_path[index+next_index];
+          distance = (next_target - robot_position).len();
           next_index++;
         }
         index += next_index;
 
         monitor->setTarget(target);
-        if (index == bezier_path.size()) {
+        if (index == generator->bezier_path.size()) {
           controller->run(false);
           isWalking = false;
           isControl = true;
         }
 
         double robot_direction = controller->getDirInDegree();
-        int target_dir = atan2(robot_position.second - target.second, target.first - robot_position.first) * 180.0 / M_PI;
+        int target_dir = atan2(robot_position.y - target.y, target.x - robot_position.x) * 180.0 / M_PI;
         int delta_dir = target_dir - robot_direction;
 
         double x_speed = smoothValue(abs(delta_dir), 0, 60, 1.0, 0.0);
