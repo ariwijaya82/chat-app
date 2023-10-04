@@ -121,6 +121,7 @@ void PathGenerator::generatePath() {
     openList.reserve(100);
     closeList.reserve(100);
     openList.push_back(new Node(robot));
+
     while (!openList.empty()) {
         auto current_it = openList.begin();
         current = *current_it;
@@ -139,7 +140,7 @@ void PathGenerator::generatePath() {
 
         for (auto &neighbor : getNeighbors(current->coordinate)) {
             if (detectCollision(neighbor) || findNodeOnList(closeList, neighbor)) continue;
-            int totalCost = current->G + heuristic(current->coordinate, neighbor, 4);
+            int totalCost = current->G + heuristic(current->coordinate, neighbor, constant->heuristic_type);
 
             Node* successor = findNodeOnList(openList, neighbor);
             if (successor == nullptr) {
@@ -177,16 +178,27 @@ void PathGenerator::generateSmoothPath(int numPoints) {
         for (auto &point : astar_path) {
             points.push_back(pair<double, double>{point.x, point.y});
         }
-        int n = points.size() - 1;
+        int n = points.size();
 
-        for (int r = 1; r <= n; ++r) {
-            for (int i = 0; i <= n - r; ++i) {
-                points[i].first = (1 - t) * points[i].first + t * points[i + 1].first;
-                points[i].second = (1 - t) * points[i].second + t * points[i + 1].second;
+        for (int j = 1; j < n; ++j) {
+            for (int k = 0; k < n - j; ++k) {
+                points[k].first = (1 - t) * points[k].first + t * points[k + 1].first;
+                points[k].second = (1 - t) * points[k].second + t * points[k + 1].second;
             }
         }
         Vec p{points[0].first, points[0].second};
         result[i] = p;
     }
     bezier_path = result;
+
+    // double distance = 0;
+    // for (size_t i = 0; i < astar_path.size()-1; i++) {
+    //   distance += (astar_path[i] - astar_path[i+1]).len();
+    // }
+    // cout << "a star: " << distance << endl;
+    // distance = 0;
+    // for (size_t i = 0; i < bezier_path.size()-1; i++) {
+    //   distance += (bezier_path[i] - bezier_path[i+1]).len();
+    // }
+    // cout << "kurva bezier: " << distance << endl;
 }

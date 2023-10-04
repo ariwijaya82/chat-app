@@ -17,6 +17,14 @@ Vec Vec::operator-(Vec vec) {
     return Vec(x - vec.x, y - vec.y);
 }
 
+Vec Vec::operator*(double scalar) {
+    return Vec(x * scalar, y * scalar);
+}
+
+Vec Vec::operator/(double scalar) {
+    return Vec(x / scalar, y / scalar);
+}
+
 bool Vec::operator==(Vec vec) {
     return x == vec.x && y == vec.y;
 }
@@ -38,6 +46,10 @@ Constant::Constant() {
         padding = global["screen_padding"].template get<double>();
         radius = global["enemy_radius"].template get<double>();
         distance = global["node_distance"].template get<double>();
+
+        heuristic_type = global["heuristic_type"].template get<int>();
+        range_x = global["range_x"].template get<double>();
+        range_a = global["range_a"].template get<double>();
     
         auto convert_point_json = [](json point) {
             double x = point["x"].template get<double>();
@@ -50,6 +62,13 @@ Constant::Constant() {
         for (auto &enemy : position["enemies"]) {
             enemies.push_back(convert_point_json(enemy));
         }
+        // cout << "(" << (int)robot.x << "," << (int)robot.y << ")" << endl
+        //      << "(" << (int)enemies[0].x << "," << (int)enemies[0].y << ")" << endl
+        //      << "(" << (int)enemies[1].x << "," << (int)enemies[1].y << ")" << endl
+        //      << "(" << (int)enemies[2].x << "," << (int)enemies[2].y << ")" << endl
+        //      << "(" << (int)enemies[3].x << "," << (int)enemies[3].y << ")" << endl
+        //      << "(" << (int)enemies[4].x << "," << (int)enemies[4].y << ")" << endl
+        //      << "(" << (int)ball.x << "," << (int)ball.y << ")" << endl << endl;
 
         auto point_in_field = [&](Vec point) {
             if (

@@ -3,5 +3,8 @@
     "screen_height": 600,
     "screen_padding": 20,
     "node_distance": 30,
-    "enemy_radius": 50
+    "enemy_radius": 50,
+    "heuristic_type": 2,
+    "range_x": 30,
+    "range_a":60
 }

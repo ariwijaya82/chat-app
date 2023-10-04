@@ -11,7 +11,7 @@
 
 int main(int argc, char** argv) {
     QApplication* app = new QApplication(argc, argv);
-    Monitor* monitor = new Monitor();
+    Monitor* monitor = new Monitor(16, "other");
     monitor->show();
 
     // Calculate Path

@@ -130,6 +130,14 @@ void Monitor::paintEvent(QPaintEvent*) {
     painter.drawEllipse(QPointF{470, 320}, 100, 100);
 
     painter.setPen(Qt::NoPen);
+    painter.setBrush(Qt::yellow);
+    for (int x = NODE_DISTANCE; x < WIDTH; x += NODE_DISTANCE) {
+      for (int y = NODE_DISTANCE; y < HEIGHT; y += NODE_DISTANCE) {
+        painter.drawEllipse(transformPoint(Vec(x, y)), 2, 2);
+      }
+    }
+
+    painter.setPen(Qt::NoPen);
     painter.setBrush(Qt::black);
     painter.drawEllipse(robot, 10, 10);
     painter.setBrush(Qt::cyan);
@@ -148,21 +156,14 @@ void Monitor::paintEvent(QPaintEvent*) {
         painter.drawEllipse(enemies[i], ENEMY_RADIUS, ENEMY_RADIUS);
     }
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(Qt::yellow);
-    for (int x = NODE_DISTANCE; x < WIDTH; x += NODE_DISTANCE) {
-      for (int y = NODE_DISTANCE; y < HEIGHT; y += NODE_DISTANCE) {
-        painter.drawEllipse(transformPoint(Vec(x, y)), 2, 2);
-      }
-    }
     painter.setBrush(Qt::red);
     for (auto &group_obstacles : obstacles){
         for (auto &obstacle : group_obstacles) {
             painter.drawEllipse(obstacle, 2, 2);
         }
     }
-    painter.setBrush(Qt::gray);
-    painter.setPen(Qt::gray);
+    painter.setBrush(Qt::blue);
+    painter.setPen(Qt::blue);
     for (int i = 0; i < astar_path.size(); i++) {
         painter.drawEllipse(astar_path[i], 2, 2);
         if (i != 0) {

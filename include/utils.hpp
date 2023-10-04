@@ -20,6 +20,8 @@ class Vec {
 
     Vec operator+(Vec);
     Vec operator-(Vec);
+    Vec operator*(double);
+    Vec operator/(double);
     bool operator==(Vec);
 };
 ostream& operator<<(ostream &os, Vec vec);
@@ -32,6 +34,9 @@ class Constant {
     Vec robot, ball;
     vector<Vec> enemies;
     vector<vector<Vec>> obstacles;
+
+    int heuristic_type;
+    double range_x, range_a;
 };
 
 #endif
