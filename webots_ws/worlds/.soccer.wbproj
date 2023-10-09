@@ -13,3 +13,4 @@ renderingDevicePerspectives: enemy_3:Camera;0;1;0;0
 renderingDevicePerspectives: enemy_4:Camera;0;1;0;0
 renderingDevicePerspectives: enemy_5:Camera;0;1;0;0
 renderingDevicePerspectives: myRobot:Camera;0;1;0.578125;0
+renderingDevicePerspectives: robot_test:Camera;1;1;0;0

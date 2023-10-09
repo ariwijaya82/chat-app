@@ -21,7 +21,7 @@ using namespace std;
 
 class Controller {
     public:
-        Controller(string type="other");
+        Controller();
         ~Controller();
         void run(bool start);
         void setVel(double x, double a);
@@ -32,13 +32,11 @@ class Controller {
         double getDirInRadian();
         double getDirInDegree();
         Vec getPosition();
-        int getTimeStep();
         
         webots::Robot *robot;
 
     private:
         int timeStep;
-        string robot_type;
         
         webots::Gyro *gyro;
         webots::Keyboard *keyboard;

@@ -1,10 +1,1 @@
-{
-    "screen_width": 900,
-    "screen_height": 600,
-    "screen_padding": 20,
-    "node_distance": 30,
-    "enemy_radius": 50,
-    "heuristic_type": 2,
-    "range_x": 30,
-    "range_a":60
-}
+{"bezier_curvature":3,"heuristic_type":1,"node_distance":30.0,"path_number":1,"robot_radius":60.0,"screen_height":600,"screen_padding":20,"screen_width":900}

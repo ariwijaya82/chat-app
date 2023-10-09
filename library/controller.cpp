@@ -7,20 +7,17 @@ static const char *motorNames[20] = {
   "AnkleL" /*ID16*/,    "FootR" /*ID17*/,     "FootL" /*ID18*/,     "Neck" /*ID19*/,      "Head" /*ID20*/
 };
 
-Controller::Controller(string type) {
+Controller::Controller() {
     robot = new webots::Robot();
     timeStep = robot->getBasicTimeStep();
 
-    robot_type = type;
-    if (type == "main") {
-        compass = robot->getCompass("compass");
-        gps = robot->getGPS("gps");
-        keyboard = robot->getKeyboard();
-        
-        compass->enable(timeStep);
-        gps->enable(timeStep);
-        keyboard->enable(timeStep);
-    }
+    compass = robot->getCompass("compass");
+    gps = robot->getGPS("gps");
+    keyboard = robot->getKeyboard();
+    
+    compass->enable(timeStep);
+    gps->enable(timeStep);
+    keyboard->enable(timeStep);
 
     gyro = robot->getGyro("Gyro");
     gyro->enable(timeStep);
@@ -32,7 +29,7 @@ Controller::Controller(string type) {
     }
 
     motionManager = new managers::RobotisOp2MotionManager(robot);
-    gaitManager = new managers::RobotisOp2GaitManager(robot, "../config/walking.ini");
+    gaitManager = new managers::RobotisOp2GaitManager(robot, "../../config/walking.ini");
 
     robot->step(timeStep);
     motionManager->playPage(9);
@@ -107,10 +104,6 @@ double Controller::getDirInDegree() {
 
 Vec Controller::getPosition() {
     return Vec((gps->getValues()[0] + 4.5) * 100, (gps->getValues()[1] + 3) * 100);
-}
-
-int Controller::getTimeStep() {
-    return timeStep;
 }
 
 void Controller::wait(int ms) {

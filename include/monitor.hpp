@@ -6,6 +6,12 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QMessageBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QSpinBox>
+#include <QtWidgets/QRadioButton>
+#include <QtWidgets/QButtonGroup>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QSpinBox>
 #include <QtGui/QPainter>
 #include <QtGui/QMouseEvent>
 
@@ -21,45 +27,53 @@ using namespace std;
 using nlohmann::json;
 
 class Monitor : public QWidget {
- public:
-  Monitor(int timeStep=16, string type="other");
-  ~Monitor();
+  public:
+    Monitor();
+    ~Monitor();
 
-  void setAStarPath(vector<Vec>);
-  void setBezierPath(vector<Vec>);
+    void setAStarPath(vector<Vec>);
+    void setBezierPath(vector<Vec>);
 
-  void setRobotPosition(Vec);
-  void setTarget(Vec);
-  void setRobotDirection(double);
+    void setRobotPosition(Vec);
+    void setTarget(Vec);
+    void setRobotDirection(double);
 
- protected:
-  void paintEvent(QPaintEvent*) override;
-  void mousePressEvent(QMouseEvent*) override;
-  void mouseMoveEvent(QMouseEvent*) override;
-  void mouseReleaseEvent(QMouseEvent*) override;
-  void generatePath();
-  void clearPath();
-  void updateWorldFile();
+  protected:
+    void paintEvent(QPaintEvent*) override;
+    void mousePressEvent(QMouseEvent*) override;
+    void mouseMoveEvent(QMouseEvent*) override;
+    void mouseReleaseEvent(QMouseEvent*) override;
+    void generatePath();
+    void clearPath();
+    void saveData();
 
-  void updateDisplay();
-  QPointF transformPoint(Vec);
+    void updateDisplay();
+    QPointF transformPoint(Vec);
 
- private:
-  QTimer* timer;
-  QPushButton *generateButton, *clearButton, *updateButton;
-  QPointF robot, ball, target;
-  QVector<QPointF> enemies, astar_path, bezier_path;
-  QVector<QVector<QPointF>> obstacles;
-  double direction = 0;
+  private:
+    void updateData();
 
-  Constant* constant;
-  double HEIGHT, WIDTH, PADDING, NODE_DISTANCE, ENEMY_RADIUS;
-  bool clicked = false;
-  int enemy_index;
-  QPointF offset;
+    GlobalData *global;
 
-  PathGenerator* generator;
-  string monitor_type;
+    QPointF robot, ball, target;
+    QVector<QPointF> enemies, astar_path, bezier_path, visited_node;
+    QVector<QVector<QPointF>> obstacles, obstacles_visible;
+    double direction = 0;
+
+    QTimer* timer;
+    QPushButton *pushButton[3];
+    QLabel *label[5];
+    QButtonGroup *buttonGroup[2];
+    QHBoxLayout *hBoxLayout;
+    QVBoxLayout *vBoxLayout[2];
+    QRadioButton *radioButton[9];
+    QSpinBox *spinBox[3];
+    
+    PathGenerator* generator;
+
+    bool clicked = false, isPathGenerated = false;
+    int enemy_index;
+    QPointF offset;
 };
 
 #endif
