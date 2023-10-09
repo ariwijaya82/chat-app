@@ -62,7 +62,7 @@ class Monitor : public QWidget {
 
     QTimer* timer;
     QPushButton *pushButton[3];
-    QLabel *label[5];
+    QLabel *label[9];
     QButtonGroup *buttonGroup[2];
     QHBoxLayout *hBoxLayout;
     QVBoxLayout *vBoxLayout[2];
@@ -74,6 +74,9 @@ class Monitor : public QWidget {
     bool clicked = false, isPathGenerated = false;
     int enemy_index;
     QPointF offset;
+
+    int number_of_visited_node = 0;
+    double astar_length = 0, bezier_length = 0, time_following = 0; 
 };
 
 #endif

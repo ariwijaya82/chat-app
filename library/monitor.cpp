@@ -132,7 +132,24 @@ Monitor::Monitor(){
       if (isPathGenerated) generatePath();
     });
     vBoxLayout[1]->setAlignment(Qt::AlignTop);
-    vBoxLayout[0]->addLayout(vBoxLayout[1]); 
+    vBoxLayout[0]->addLayout(vBoxLayout[1]);
+
+    label[5] = new QLabel("Visited Node: 0", this);
+    // label[5]->setFont(QFont("Times New Roman", 12));
+    vBoxLayout[0]->addWidget(label[5]);
+
+    label[6] = new QLabel("A* Length: 0", this);
+    // label[6]->setFont(QFont("Times New Roman", 12));
+    vBoxLayout[0]->addWidget(label[6]);
+
+    label[7] = new QLabel("Bezier Length: 0", this);
+    // label[7]->setFont(QFont("Times New Roman", 12));
+    vBoxLayout[0]->addWidget(label[7]);
+
+    label[8] = new QLabel("Time: 0", this);
+    // label[8]->setFont(QFont("Times New Roman", 12));
+    vBoxLayout[0]->addWidget(label[8]);    
+
     setLayout(vBoxLayout[0]);
 }
 
@@ -142,7 +159,7 @@ Monitor::~Monitor() {
     delete timer;
     for (int i = 0; i < 3; i++)
       delete pushButton[i];
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 9; i++)
       delete label[i];
     for (int i = 0; i < 2; i++)
       delete buttonGroup[i];
@@ -434,6 +451,8 @@ void Monitor::generatePath() {
     astar_path = transform_points(global->astar_path);
     bezier_path = transform_points(global->bezier_path);
     visited_node = transform_points(global->visited_node);
+
+    label[5]->setText("Visited Node: " + QString::number(global->visited_node.size()));
 }
 
 void Monitor::clearPath() {
