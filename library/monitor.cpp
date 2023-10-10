@@ -135,20 +135,19 @@ Monitor::Monitor(){
     vBoxLayout[0]->addLayout(vBoxLayout[1]);
 
     label[5] = new QLabel("Visited Node: 0", this);
-    // label[5]->setFont(QFont("Times New Roman", 12));
     vBoxLayout[0]->addWidget(label[5]);
 
     label[6] = new QLabel("A* Length: 0", this);
-    // label[6]->setFont(QFont("Times New Roman", 12));
     vBoxLayout[0]->addWidget(label[6]);
 
     label[7] = new QLabel("Bezier Length: 0", this);
-    // label[7]->setFont(QFont("Times New Roman", 12));
     vBoxLayout[0]->addWidget(label[7]);
 
     label[8] = new QLabel("Time: 0", this);
-    // label[8]->setFont(QFont("Times New Roman", 12));
-    vBoxLayout[0]->addWidget(label[8]);    
+    vBoxLayout[0]->addWidget(label[8]);
+
+    label[9] = new QLabel("Error: 0", this);
+    vBoxLayout[0]->addWidget(label[9]);    
 
     setLayout(vBoxLayout[0]);
 }
@@ -216,6 +215,10 @@ void Monitor::setBezierPath(vector<Vec> points) {
     }
 }
 
+void Monitor::addFollowingPath(Vec point) {
+  following_path.push_back(transformPoint(point));
+}
+
 void Monitor::setRobotPosition(Vec point) {
     robot = transformPoint(point);
 }
@@ -226,6 +229,26 @@ void Monitor::setTarget(Vec point) {
 
 void Monitor::setRobotDirection(double dir) {
     direction = dir;
+}
+
+void Monitor::setNodeVisited(int number) {
+    label[5]->setText("Visited Node: " + QString::number(number));
+}
+
+void Monitor::setAStarLength(double length) {
+    label[6]->setText("A* Length: " + QString::number(length));
+}
+
+void Monitor::setBezierLength(double length) {
+    label[7]->setText("Bezier Length: " + QString::number(length));
+}
+
+void Monitor::setTimeFollow(double time) {
+    label[8]->setText("Time: " + QString::number(time));
+}
+
+void Monitor::setFollowingError(double error) {
+    label[9]->setText("Error: " + QString::number(error));
 }
 
 void Monitor::updateDisplay() {
@@ -324,6 +347,11 @@ void Monitor::paintEvent(QPaintEvent*) {
     painter.setPen(Qt::magenta);
     for (int i = 1; i < bezier_path.size(); i++) {
         painter.drawLine(bezier_path[i], bezier_path[i-1]);
+    }
+    painter.setBrush(Qt::darkGray);
+    painter.setPen(Qt::darkGray);
+    for (int i = 1; i < following_path.size(); i++) {
+        painter.drawPoint(following_path[i]);
     }
 
     painter.setPen(Qt::cyan);
@@ -452,7 +480,9 @@ void Monitor::generatePath() {
     bezier_path = transform_points(global->bezier_path);
     visited_node = transform_points(global->visited_node);
 
-    label[5]->setText("Visited Node: " + QString::number(global->visited_node.size()));
+    setNodeVisited(global->visited_node.size());
+    setAStarLength(generator->getAstarLength());
+    setBezierLength(generator->getBezierLength());
 }
 
 void Monitor::clearPath() {

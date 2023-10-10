@@ -3,6 +3,8 @@
 #include "monitor.hpp"
 #include "utils.hpp"
 
+#include <chrono>
+
 int main(int argc, char** argv) {
     // initialize controller
     Controller* controller = new Controller();
@@ -18,17 +20,21 @@ int main(int argc, char** argv) {
     Monitor* monitor = new Monitor();
     monitor->setAStarPath(global->astar_path);
     monitor->setBezierPath(global->bezier_path);
+    monitor->setNodeVisited(global->visited_node.size());
+    monitor->setAStarLength(generator->getAstarLength());
+    monitor->setBezierLength(generator->getBezierLength());
     monitor->show();
 
     // Update Process
     bool isWalking = false;
     bool isControl = false;
-    bool isTracking = true;
     size_t index = 0;
     
     size_t second_index = 0;
     double error_tracking = 0;
     int count_tracking = 0;
+
+    chrono::steady_clock::time_point begin = chrono::steady_clock::now();
 
     while(true) {
       controller->setVel(0,0);
@@ -37,10 +43,11 @@ int main(int argc, char** argv) {
       Vec robot_position = controller->getPosition();
       monitor->setRobotPosition(robot_position);
       monitor->setRobotDirection(controller->getDirInRadian());
+      monitor->addFollowingPath(robot_position);
 
       if (isControl) {
         controller->manualController();
-      } else if (isTracking) {
+      } else {
         if (!isWalking) {
           controller->run(true);
           isWalking = true;
@@ -71,10 +78,12 @@ int main(int argc, char** argv) {
         monitor->setTarget(target);
         if (index == global->bezier_path.size()) {
           controller->run(false);
-          isWalking = false;
           isControl = true;
 
-          isTracking = false;
+          chrono::steady_clock::time_point end = chrono::steady_clock::now();
+          double delta_time = chrono::duration_cast<std::chrono::seconds>(end - begin).count();
+          monitor->setTimeFollow(delta_time);
+          monitor->setFollowingError(sqrt(error_tracking / count_tracking));
         }
 
         double robot_direction = controller->getDirInDegree();

@@ -33,10 +33,17 @@ class Monitor : public QWidget {
 
     void setAStarPath(vector<Vec>);
     void setBezierPath(vector<Vec>);
+    void addFollowingPath(Vec);
 
     void setRobotPosition(Vec);
     void setTarget(Vec);
     void setRobotDirection(double);
+
+    void setNodeVisited(int);
+    void setAStarLength(double);
+    void setBezierLength(double);
+    void setTimeFollow(double);
+    void setFollowingError(double);
 
   protected:
     void paintEvent(QPaintEvent*) override;
@@ -56,13 +63,13 @@ class Monitor : public QWidget {
     GlobalData *global;
 
     QPointF robot, ball, target;
-    QVector<QPointF> enemies, astar_path, bezier_path, visited_node;
+    QVector<QPointF> enemies, astar_path, bezier_path, visited_node, following_path;
     QVector<QVector<QPointF>> obstacles, obstacles_visible;
     double direction = 0;
 
     QTimer* timer;
     QPushButton *pushButton[3];
-    QLabel *label[9];
+    QLabel *label[10];
     QButtonGroup *buttonGroup[2];
     QHBoxLayout *hBoxLayout;
     QVBoxLayout *vBoxLayout[2];
