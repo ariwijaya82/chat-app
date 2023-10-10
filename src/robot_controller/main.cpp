@@ -18,6 +18,7 @@ int main(int argc, char** argv) {
     // initialize monitor
     QApplication* app = new QApplication(argc, argv);
     Monitor* monitor = new Monitor();
+    monitor->setDisableButton(true);
     monitor->setAStarPath(global->astar_path);
     monitor->setBezierPath(global->bezier_path);
     monitor->setNodeVisited(global->visited_node.size());
@@ -28,6 +29,7 @@ int main(int argc, char** argv) {
     // Update Process
     bool isWalking = false;
     bool isControl = false;
+    bool isTracking = true;
     size_t index = 0;
     
     size_t second_index = 0;
@@ -41,7 +43,7 @@ int main(int argc, char** argv) {
 
       if (isControl) {
         controller->manualController();
-      } else {
+      } else if (isTracking){
         if (!isWalking) {
           controller->run(true);
           isWalking = true;
@@ -79,11 +81,13 @@ int main(int argc, char** argv) {
         if (index == global->bezier_path.size()) {
           controller->run(false);
           isControl = true;
+          isTracking = false;
 
           chrono::steady_clock::time_point end = chrono::steady_clock::now();
           double delta_time = chrono::duration_cast<std::chrono::seconds>(end - begin).count();
           monitor->setTimeFollow(delta_time);
           monitor->setFollowingError(sqrt(error_tracking / count_tracking));
+          monitor->setDisableButton(false);
         }
 
         double robot_direction = controller->getDirInDegree();

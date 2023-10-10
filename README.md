@@ -12,7 +12,6 @@ This project is about simulation humanoid robot soccer path planning with A* alg
 
 Requirement:
 - c++ compiler
-- Python 3
 - Webots 2023a
 - Qt 6
 

@@ -45,6 +45,8 @@ class Monitor : public QWidget {
     void setTimeFollow(double);
     void setFollowingError(double);
 
+    void setDisableButton(bool);
+
   protected:
     void paintEvent(QPaintEvent*) override;
     void mousePressEvent(QMouseEvent*) override;

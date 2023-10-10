@@ -163,7 +163,7 @@ Monitor::~Monitor() {
     for (int i = 0; i < 2; i++)
       delete buttonGroup[i];
     delete hBoxLayout;
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 3; i++)
       delete vBoxLayout[i];
     for (int i = 0; i < 9; i++)
       delete radioButton[i];
@@ -171,7 +171,17 @@ Monitor::~Monitor() {
       delete spinBox[i];
 }
 
+void Monitor::setDisableButton(bool value) {
+  for (int i = 0; i < 3; i++)
+    pushButton[i]->setDisabled(value);
+  for (int i = 0; i < 3; i++)
+    spinBox[i]->setDisabled(value);
+  for (int i = 0; i < 9; i++)
+    radioButton[i]->setDisabled(value);
+}
+
 void Monitor::updateData() {
+  clearPath();
   robot = target = transformPoint(global->robot);
   ball = transformPoint(global->ball);
   enemies.clear();
@@ -491,6 +501,8 @@ void Monitor::clearPath() {
     astar_path.clear();
     bezier_path.clear();
     visited_node.clear();
+    following_path.clear();
+    direction = 0;
 }
 
 void Monitor::saveData() {
