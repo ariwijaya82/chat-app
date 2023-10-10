@@ -43,7 +43,7 @@ Monitor::Monitor(){
     buttonGroup[0] = new QButtonGroup(this);
     hBoxLayout = new QHBoxLayout();
     for (int i = 0; i < 5; i++) {
-      radioButton[i] = new QRadioButton(QString::number(i), this);
+      radioButton[i] = new QRadioButton(QString::number(i+1), this);
       if (i == global->path_number) radioButton[i]->setChecked(true);
 
       buttonGroup[0]->addButton(radioButton[i]);
@@ -284,7 +284,7 @@ void Monitor::paintEvent(QPaintEvent*) {
     painter.drawLine(QPointF{470,20}, QPointF{470,620});
     painter.drawEllipse(QPointF{470, 320}, 100, 100);
 
-    painter.setPen(Qt::NoPen);
+    painter.setPen(Qt::yellow);
     painter.setBrush(Qt::yellow);
     for (int x = global->node_distance; x < global->screen_width; x += global->node_distance) {
       for (int y = global->node_distance; y < global->screen_height; y += global->node_distance) {
@@ -292,14 +292,14 @@ void Monitor::paintEvent(QPaintEvent*) {
       }
     }
 
-    painter.setPen(Qt::NoPen);
+    painter.setPen(Qt::black);
     painter.setBrush(Qt::black);
     painter.drawEllipse(robot, 10, 10);
     painter.setPen(Qt::black);
     painter.setBrush(Qt::NoBrush);
     painter.drawEllipse(robot, global->robot_radius/2, global->robot_radius/2);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(Qt::cyan);
+    painter.setPen(Qt::white);
+    painter.setBrush(Qt::white);
     painter.drawEllipse(ball, 10, 10);
 
     painter.setPen(Qt::black);
@@ -313,48 +313,49 @@ void Monitor::paintEvent(QPaintEvent*) {
         painter.drawEllipse(enemies[i], 10, 10);
         painter.setBrush(Qt::NoBrush);
         painter.drawEllipse(enemies[i], global->robot_radius/2, global->robot_radius/2);
-        painter.setPen(QPen(Qt::darkBlue, 2, Qt::DashLine));
+        painter.setPen(QPen(Qt::red, 1, Qt::DashLine));
         painter.drawEllipse(enemies[i], global->robot_radius, global->robot_radius);
     }
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(Qt::darkBlue);
+    painter.setPen(Qt::darkRed);
+    painter.setBrush(Qt::darkRed);
     for (auto &group_obstacles : obstacles){
         for (auto &obstacle : group_obstacles) {
             painter.drawEllipse(obstacle, 2, 2);
         }
     }
+    painter.setPen(Qt::red);
     painter.setBrush(Qt::red);
     for (auto &group_obstacles : obstacles_visible){
         for (auto &obstacle : group_obstacles) {
             painter.drawEllipse(obstacle, 2, 2);
         }
     }
-    painter.setBrush(Qt::darkRed);
-    painter.setPen(Qt::darkRed);
+    painter.setPen(Qt::gray);
+    painter.setBrush(Qt::gray);
     for (int i = 0; i < visited_node.size(); i++) {
         painter.drawEllipse(visited_node[i], 2, 2);
     }
-    painter.setBrush(Qt::blue);
     painter.setPen(Qt::blue);
+    painter.setBrush(Qt::blue);
     for (int i = 0; i < astar_path.size(); i++) {
         painter.drawEllipse(astar_path[i], 2, 2);
         if (i != 0) {
             painter.drawLine(astar_path[i], astar_path[i-1]);
         }
     }
-    painter.setBrush(Qt::NoBrush);
     painter.setPen(Qt::magenta);
+    painter.setBrush(Qt::magenta);
     for (int i = 1; i < bezier_path.size(); i++) {
         painter.drawLine(bezier_path[i], bezier_path[i-1]);
     }
-    painter.setBrush(Qt::darkGray);
-    painter.setPen(Qt::darkGray);
+    painter.setPen(Qt::cyan);
+    painter.setBrush(Qt::cyan);
     for (int i = 1; i < following_path.size(); i++) {
         painter.drawPoint(following_path[i]);
     }
 
-    painter.setPen(Qt::cyan);
+    painter.setPen(Qt::darkGray);
     painter.drawLine(robot, target);
 }
 

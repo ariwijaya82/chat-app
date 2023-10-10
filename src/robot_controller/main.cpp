@@ -39,12 +39,6 @@ int main(int argc, char** argv) {
     while(true) {
       controller->setVel(0,0);
 
-      // update position adn direction in radian
-      Vec robot_position = controller->getPosition();
-      monitor->setRobotPosition(robot_position);
-      monitor->setRobotDirection(controller->getDirInRadian());
-      monitor->addFollowingPath(robot_position);
-
       if (isControl) {
         controller->manualController();
       } else {
@@ -53,10 +47,16 @@ int main(int argc, char** argv) {
           isWalking = true;
         }
 
+        // update position adn direction in radian
+        Vec robot_position = controller->getPosition();
+        monitor->setRobotPosition(robot_position);
+        monitor->setRobotDirection(controller->getDirInRadian());
+        monitor->addFollowingPath(robot_position);
+
         Vec target = global->bezier_path[index];
         double distance = (target - robot_position).len();
         size_t next_index = 0;
-        while (distance < 40 && index + next_index < global->bezier_path.size()) {
+        while (distance < 20 && index + next_index < global->bezier_path.size()) {
           Vec next_target = global->bezier_path[index+next_index];
           distance = (next_target - robot_position).len();
           next_index++;

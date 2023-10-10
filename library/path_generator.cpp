@@ -198,8 +198,9 @@ void PathGenerator::generatePath() {
       if (dir != new_dir) {
         for (int j = 0; j < global->bezier_curvature; j++) filter_path.push_back(path[i]);
         dir = new_dir;
+      } else {
+        filter_path.push_back(path[i]);
       }
-      filter_path.push_back(path[i]);
       i++;
     }
     filter_path.push_back(path[path.size()-2]);
