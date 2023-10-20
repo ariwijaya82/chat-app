@@ -22,20 +22,28 @@ struct Node {
 
 class PathGenerator {
     public:
-        PathGenerator();
-
-        // Vec robot, ball;
-        // vector<Vec> enemies, astar_path, bezier_path;
-        // vector<vector<Vec>> obstacles;
+        PathGenerator(GlobalData* global_): global(global_) {}
+        ~PathGenerator(){}
 
         void generatePath();
         void generateSmoothPath(int);
+
         double getAstarLength();
         double getBezierLength();
+
+        bool astar_find_next_node();
+        void astar_find_neighbors();
+        void process_path();
+        void modified_path();
+        
+        vector<vector<Vec>> getBezierPoints(int, int);
+
+        vector<Node*> openList, closeList;
+        Node* current;
+
     private:
         GlobalData* global;
-        // double HEIGHT, WIDTH, NODE_DISTANCE;
-     
+
         double heuristic(Vec, Vec, int);
         bool detectCollision(Vec);
         vector<Vec> getNeighbors(Vec);

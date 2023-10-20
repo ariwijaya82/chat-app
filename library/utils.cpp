@@ -33,39 +33,47 @@ ostream& operator<<(ostream &os, Vec vec) {
     return os << "{" << vec.x << "," << vec.y << "}";
 }
 
-GlobalData* GlobalData::m_UniqueInstance = new GlobalData();
-
-GlobalData::GlobalData() {
-    try {
-        ifstream global_file(global_filename);
-        ifstream position_file(position_filename);
-
-        global = json::parse(global_file);
-        position = json::parse(position_file);
-
-        global_file.close();
-        position_file.close();
-
-        screen_height = global["screen_height"].template get<double>();
-        screen_width = global["screen_width"].template get<double>();
-        screen_padding = global["screen_padding"].template get<double>();
-        robot_radius = global["robot_radius"].template get<double>();
-        node_distance = global["node_distance"].template get<double>();
-
-        heuristic_type = global["heuristic_type"].template get<int>();
-        path_number = global["path_number"].template get<int>();
-        bezier_curvature = global["bezier_curvature"].template get<int>();
-        updateValue();
-    } catch(...) {
-        cout << "failed load/read json file" << endl;
-        exit(-1);
-    }
+GlobalData::GlobalData(string dir_) {
+  dir = dir_;
+  global_filename = dir + "config/global.json";
+  position_filename = dir + "config/position.json";
+  worlds_filename = dir + "webots_ws/worlds/soccer.wbt";
+  try {
+    loadFile();
+    updateGlobal();
+    updatePosition();
+    updateTargetPosition();
+    updateObstacles();
+  } catch(...) {
+    cerr << "failed to initialize global data" << endl;
+  }
 }
 
-void GlobalData::updateValue() {
+void GlobalData::loadFile() {
+    ifstream global_file(global_filename);
+    ifstream position_file(position_filename);
+
+    global = json::parse(global_file);
+    position = json::parse(position_file);
+
+    global_file.close();
+    position_file.close();
+}
+
+void GlobalData::updateGlobal() {
+    screen_height = global["screen_height"].template get<double>();
+    screen_width = global["screen_width"].template get<double>();
+    screen_padding = global["screen_padding"].template get<double>();
+    robot_radius = global["robot_radius"].template get<double>();
+    node_distance = global["node_distance"].template get<double>();
+
+    heuristic_type = global["heuristic_type"].template get<int>();
+    path_number = global["path_number"].template get<int>();
+    bezier_curvature = global["bezier_curvature"].template get<int>();
+}
+
+void GlobalData::updatePosition() {
   enemies.clear();
-  obstacles.clear();
-  obstacles_visible.clear();
 
   auto convert_point_json = [](json point) {
       double x = point["x"].template get<double>();
@@ -78,6 +86,11 @@ void GlobalData::updateValue() {
   for (auto &enemy : position[path_number]["enemies"]) {
       enemies.push_back(convert_point_json(enemy));
   }
+}
+
+void GlobalData::updateObstacles() {
+  obstacles.clear();
+  obstacles_visible.clear();
 
   auto point_in_field = [&](Vec point) {
       if (
@@ -112,9 +125,99 @@ void GlobalData::updateValue() {
   }
 }
 
-double smoothValue(double value, double min_input, double max_input, double min_output, double max_output) {
-  double clamp_value = value;
-  if (value < min_input) clamp_value = min_input;
-  if (value > max_input) clamp_value = max_input;
-  return min_output + (clamp_value-min_input)*(max_output-min_output)/(max_input-min_input);
+void GlobalData::updateTargetPosition() {
+  target_position.clear();
+
+  auto convert_point_json = [](json point) {
+      double x = point["x"].template get<double>();
+      double y = point["y"].template get<double>();
+      return Vec((x + 4.5) * 100, (y + 3) * 100);
+  };
+
+  for (auto &data : position[path_number]["target"]) {
+    vector<Vec> temp;
+    for (auto &position : data) {
+      temp.push_back(convert_point_json(position));
+    }
+    target_position.push_back(temp);
+  }
+}
+
+void GlobalData::saveValue() {
+  global["path_number"] = path_number;
+  global["heuristic_type"] = heuristic_type;
+  global["robot_radius"] = robot_radius;
+  global["node_distance"] = node_distance;
+  global["bezier_curvature"] = bezier_curvature;
+  
+  auto convert_point_to_json = [&](Vec point) {
+    json data;
+    data["x"] = point.x / 100 - 4.5;
+    data["y"] = point.y / 100 - 3;
+    return data;
+  };
+
+  position[path_number]["robot"] = convert_point_to_json(robot);
+  position[path_number]["ball"] = convert_point_to_json(ball);
+  json enemies_data;
+  for (auto enemy : enemies) {
+    enemies_data.push_back(convert_point_to_json(enemy));
+  }
+  position[path_number]["enemies"] = enemies_data;
+
+  json target_position_json;
+  for (auto &data : target_position) {
+    json temp;
+    for (auto &position : data) {
+      temp.push_back(convert_point_to_json(position));
+    }
+    target_position_json.push_back(temp);
+  }
+  position[path_number]["target"] = target_position_json;
+
+  ofstream global_file(global_filename);
+  ofstream position_file(position_filename);
+  
+  global_file << global;
+  position_file << position;
+  
+  global_file.close();
+  position_file.close();
+
+  ifstream world_file_input(worlds_filename);
+  vector<string> lines;
+  string line;
+  while (getline(world_file_input, line)) {
+      lines.push_back(line);
+  }
+  world_file_input.close();
+  vector<int> update_line{31, 35, 48, 62, 76, 90, 104};
+  auto update_string_position = [&](string pos_str, Vec pos) {
+      stringstream ss(pos_str);
+      vector<string> nums;
+      string num;
+
+      while (ss >> num) {
+          nums.push_back(num);
+      }
+
+      double x_ = pos.x / 100 - 4.5;
+      double y_ = pos.y / 100 - 3;
+      
+      stringstream result;
+      result << "  " << nums[0] << " " << x_ << " " << y_ << " " << nums[3];
+      return result.str();
+  };
+
+  lines[update_line[0]] = update_string_position(lines[update_line[0]], ball);
+  lines[update_line[1]] = update_string_position(lines[update_line[1]], robot);
+  for (size_t i = 2; i < update_line.size(); i++) {
+      lines[update_line[i]] = update_string_position(lines[update_line[i]], enemies[i-2]);
+  }
+
+  ofstream world_file_output(worlds_filename);
+  for (auto line : lines) {
+      world_file_output << line << endl;
+  }
+  world_file_output.close();
 }

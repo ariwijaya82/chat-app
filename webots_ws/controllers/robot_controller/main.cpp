@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
   thread server_thread([&]() {
     while (true) {
       try {
-        ws_server->listen(9000 + controller->getName().back() - '0');
+        ws_server->listen(9000);
         ws_server->start_accept();
         cout << controller->getName() << " server running" << endl;
         ws_server->run();
@@ -55,14 +55,13 @@ int main(int argc, char** argv) {
     }
   });
   thread main_thread([&]() {
-    int id = controller->getName().back() - '0';
     controller->setManual(true);
-    controller->setTarget(controller->getPosition() + Vec{100, 0});
+    controller->setTarget(controller->getPosition() + Vec{0, 300});
     while (true) {
       if (connection_number == 1) {
         try {
           json data;
-          data["id"] = id;
+          data["id"] = 0;
           data["type"] = "position";
           data["value"]["x"] = controller->getPosition().x;
           data["value"]["y"] = controller->getPosition().y;
