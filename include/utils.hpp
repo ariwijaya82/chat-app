@@ -29,15 +29,18 @@ ostream& operator<<(ostream &os, Vec vec);
 
 class GlobalData {
   public:
-    string global_filename = "../../config/global.json";
-    string position_filename = "../../config/position.json";
-    string worlds_filename = "../../webots_ws/worlds/soccer.wbt";
 
-    ~GlobalData() { delete m_UniqueInstance; }
-    static GlobalData* getInstance() { return m_UniqueInstance; }
-    void updateValue();
+    GlobalData(string);
+    void loadFile();
+    void updateGlobal();
+    void updatePosition();
+    void updateObstacles();
+    void updateTargetPosition();
+    void saveValue();
 
-    json global, position;
+    string global_filename;
+    string position_filename;
+    string worlds_filename;
 
     double screen_height,
            screen_width,
@@ -47,18 +50,14 @@ class GlobalData {
     int heuristic_type, path_number, bezier_curvature;
     
     Vec robot, ball;
-    vector<Vec> enemies, visited_node, astar_path, bezier_path;
-    vector<vector<Vec>> obstacles, obstacles_visible;
+    vector<Vec> enemies;
+    
+    vector<Vec> visited_node, astar_path, bezier_path;
+    vector<vector<Vec>> obstacles, obstacles_visible, target_position;
 
   private:
-    static GlobalData* m_UniqueInstance;
-
-    GlobalData();
-    GlobalData(const GlobalData&) = delete;
-    GlobalData& operator=(const GlobalData&) = delete;
+    string dir;
+    json global, position;
 };
-
-// Constant getConstant();
-double smoothValue(double value, double min_input, double max_input, double min_output, double max_output);
 
 #endif

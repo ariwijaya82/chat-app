@@ -1,39 +1,97 @@
-#include <webots/Robot.hpp>
-#include <webots/PositionSensor.hpp>
-#include <webots/GPS.hpp>
-#include <RobotisOp2MotionManager.hpp>
+#include "controller.hpp"
 
-using namespace webots;
-using namespace managers;
+#include <websocketpp/config/asio_no_tls.hpp>
+#include <websocketpp/server.hpp>
+#include <nlohmann/json.hpp>
+
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
+
 using namespace std;
 
-static const char *motorNames[20] = {
-  "ShoulderR" /*ID1 */, "ShoulderL" /*ID2 */, "ArmUpperR" /*ID3 */, "ArmUpperL" /*ID4 */, "ArmLowerR" /*ID5 */,
-  "ArmLowerL" /*ID6 */, "PelvYR" /*ID7 */,    "PelvYL" /*ID8 */,    "PelvR" /*ID9 */,     "PelvL" /*ID10*/,
-  "LegUpperR" /*ID11*/, "LegUpperL" /*ID12*/, "LegLowerR" /*ID13*/, "LegLowerL" /*ID14*/, "AnkleR" /*ID15*/,
-  "AnkleL" /*ID16*/,    "FootR" /*ID17*/,     "FootL" /*ID18*/,     "Neck" /*ID19*/,      "Head" /*ID20*/
-};
+using json = nlohmann::json;
+typedef websocketpp::server<websocketpp::config::asio> server;
+using connection_hdl = websocketpp::connection_hdl;
+using websocketpp::lib::placeholders::_1;
+using websocketpp::lib::placeholders::_2;
 
-int main() {
-    webots::Robot* robot = new webots::Robot();
-    double timeStep = robot->getBasicTimeStep();
+// global variable
+server *ws_server = new server();
+int connection_number = 0;
+connection_hdl ws_conn;
 
-    PositionSensor* positionSensors[20];
-    for (int i = 0; i < 20; i++) {
-        string sensorName = motorNames[i];
-        sensorName.push_back('S');
-        positionSensors[i] = robot->getPositionSensor(sensorName);
-        positionSensors[i]->enable(timeStep);
+void wait(int);
+void on_open(server*, connection_hdl);
+void on_close(server*, connection_hdl);
+void on_message(server*, connection_hdl, server::message_ptr);
+
+int main(int argc, char** argv) {
+  GlobalData *global = new GlobalData("../../../");
+  Controller *controller = new Controller(global);
+
+  // generate websocket
+  ws_server->set_open_handler(bind(on_open, ws_server, ::_1));
+  ws_server->set_close_handler(bind(on_close, ws_server, ::_1));
+  ws_server->init_asio();
+  ws_server->set_error_channels(websocketpp::log::elevel::none);
+  ws_server->set_access_channels(websocketpp::log::alevel::none);
+  ws_server->set_message_handler(bind(on_message, ws_server, ::_1, ::_2));
+
+  thread server_thread([&]() {
+    while (true) {
+      try {
+        ws_server->listen(9000 + controller->getName().back() - '0');
+        ws_server->start_accept();
+        cout << controller->getName() << " server running" << endl;
+        ws_server->run();
+        break;
+      } catch (websocketpp::exception const &e) {
+        cout << "failed init websocket and try again" << endl;
+        cout << "websocket error: " << e.what() << endl;
+        this_thread::sleep_for(chrono::seconds(30));
+      }
+    }
+  });
+  thread main_thread([&]() {
+    int id = controller->getName().back() - '0';
+    controller->setManual(true);
+    controller->setTarget(controller->getPosition() + Vec{100, 0});
+    while (true) {
+      if (connection_number == 1) {
+        try {
+          json data;
+          data["id"] = id;
+          data["type"] = "position";
+          data["value"]["x"] = controller->getPosition().x;
+          data["value"]["y"] = controller->getPosition().y;
+          ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+        } catch(...) {
+          cout << "failed send data" << endl;
+        }
+      }
+      controller->process();
     }
 
-    RobotisOp2MotionManager* motion = new RobotisOp2MotionManager(robot);
-    robot->step(timeStep);
-    motion->playPage(9);
-    double startTime = robot->getTime();
-    while (startTime + 2000 > robot->getTime())
-        robot->step(timeStep);
+  });
+  server_thread.join();
+  main_thread.join();
 
-    delete robot;
-    delete motion;
-    return 0;
+  return 0;
+}
+
+void on_open(server* ws_server, connection_hdl hdl) {
+  cout << "connection open" << endl;
+  ws_conn = hdl;
+  connection_number = 1;
+}
+
+void on_close(server* ws_server, connection_hdl hdl) {
+  cout << "connection close" << endl;
+  connection_number = 0;
+}
+
+void on_message(server* ws_server, connection_hdl hdl, server::message_ptr msg) {
+  json data = json::parse(msg->get_payload());
 }
