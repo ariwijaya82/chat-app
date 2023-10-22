@@ -1,13 +1,15 @@
-#include "path_generator.hpp"
-#include "monitor.hpp"
-#include "utils.hpp"
+#include <QtWidgets/QApplication>
+#include <iostream>
+
+#include "main_window.hpp"
+
+using namespace std;
 
 int main(int argc, char** argv) {
+  QApplication *app = new QApplication(argc, argv);
   GlobalData *global = new GlobalData("../");
+  MainWindow *window = new MainWindow(global);
 
-  QApplication* app = new QApplication(argc, argv);
-  Monitor* monitor = new Monitor(global);
-  monitor->show();
-
+  window->show();
   return app->exec();
 }

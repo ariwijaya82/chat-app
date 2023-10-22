@@ -33,6 +33,19 @@ ostream& operator<<(ostream &os, Vec vec) {
     return os << "{" << vec.x << "," << vec.y << "}";
 }
 
+Vec convertPoint(json point) {
+  double x = point["x"].template get<double>();
+  double y = point["y"].template get<double>();
+  return Vec((x + 4.5) * 100, (y + 3) * 100);
+}
+
+json convertPoint(Vec point) {
+  json data;
+  data["x"] = point.x / 100 - 4.5;
+  data["y"] = point.y / 100 - 3;
+  return data;
+}
+
 GlobalData::GlobalData(string dir_) {
   dir = dir_;
   global_filename = dir + "config/global.json";
@@ -66,7 +79,6 @@ void GlobalData::updateGlobal() {
     screen_padding = global["screen_padding"].template get<double>();
     robot_radius = global["robot_radius"].template get<double>();
     node_distance = global["node_distance"].template get<double>();
-
     heuristic_type = global["heuristic_type"].template get<int>();
     path_number = global["path_number"].template get<int>();
     bezier_curvature = global["bezier_curvature"].template get<int>();
@@ -74,17 +86,11 @@ void GlobalData::updateGlobal() {
 
 void GlobalData::updatePosition() {
   enemies.clear();
-
-  auto convert_point_json = [](json point) {
-      double x = point["x"].template get<double>();
-      double y = point["y"].template get<double>();
-      return Vec((x + 4.5) * 100, (y + 3) * 100);
-  };
-
-  robot = convert_point_json(position[path_number]["robot"]);
-  ball = convert_point_json(position[path_number]["ball"]);
+  
+  robot = convertPoint(position[path_number]["robot"]);
+  ball = convertPoint(position[path_number]["ball"]);
   for (auto &enemy : position[path_number]["enemies"]) {
-      enemies.push_back(convert_point_json(enemy));
+      enemies.push_back(convertPoint(enemy));
   }
 }
 
@@ -128,16 +134,10 @@ void GlobalData::updateObstacles() {
 void GlobalData::updateTargetPosition() {
   target_position.clear();
 
-  auto convert_point_json = [](json point) {
-      double x = point["x"].template get<double>();
-      double y = point["y"].template get<double>();
-      return Vec((x + 4.5) * 100, (y + 3) * 100);
-  };
-
   for (auto &data : position[path_number]["target"]) {
     vector<Vec> temp;
     for (auto &position : data) {
-      temp.push_back(convert_point_json(position));
+      temp.push_back(convertPoint(position));
     }
     target_position.push_back(temp);
   }
@@ -150,18 +150,11 @@ void GlobalData::saveValue() {
   global["node_distance"] = node_distance;
   global["bezier_curvature"] = bezier_curvature;
   
-  auto convert_point_to_json = [&](Vec point) {
-    json data;
-    data["x"] = point.x / 100 - 4.5;
-    data["y"] = point.y / 100 - 3;
-    return data;
-  };
-
-  position[path_number]["robot"] = convert_point_to_json(robot);
-  position[path_number]["ball"] = convert_point_to_json(ball);
+  position[path_number]["robot"] = convertPoint(robot);
+  position[path_number]["ball"] = convertPoint(ball);
   json enemies_data;
   for (auto enemy : enemies) {
-    enemies_data.push_back(convert_point_to_json(enemy));
+    enemies_data.push_back(convertPoint(enemy));
   }
   position[path_number]["enemies"] = enemies_data;
 
@@ -169,7 +162,7 @@ void GlobalData::saveValue() {
   for (auto &data : target_position) {
     json temp;
     for (auto &position : data) {
-      temp.push_back(convert_point_to_json(position));
+      temp.push_back(convertPoint(position));
     }
     target_position_json.push_back(temp);
   }

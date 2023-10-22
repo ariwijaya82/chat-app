@@ -31,33 +31,46 @@ class GlobalData {
   public:
 
     GlobalData(string);
+    
     void loadFile();
+
     void updateGlobal();
     void updatePosition();
     void updateObstacles();
     void updateTargetPosition();
+    
     void saveValue();
 
     string global_filename;
     string position_filename;
     string worlds_filename;
 
-    double screen_height,
-           screen_width,
-           screen_padding,
-           robot_radius,
-           node_distance;
-    int heuristic_type, path_number, bezier_curvature;
+    double screen_height;
+    double screen_width;
+    double screen_padding;
+
+    double robot_radius;
+    double node_distance;
+    int path_number;
+    int heuristic_type;
+    int bezier_curvature;
     
-    Vec robot, ball;
+    Vec robot;
+    Vec ball;
     vector<Vec> enemies;
     
-    vector<Vec> visited_node, astar_path, bezier_path;
-    vector<vector<Vec>> obstacles, obstacles_visible, target_position;
+    vector<vector<Vec>> obstacles;
+    vector<vector<Vec>> obstacles_visible;
+    vector<vector<Vec>> target_position;
+    
+    vector<Vec> visited_node;
+    vector<Vec> astar_path;
+    vector<Vec> bezier_path;
+    vector<Vec> following_path;
 
+    json global, position;
   private:
     string dir;
-    json global, position;
 };
 
 #endif
