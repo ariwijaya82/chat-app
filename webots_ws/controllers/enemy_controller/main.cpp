@@ -22,7 +22,6 @@ server *ws_server = new server();
 int connection_number = 0;
 connection_hdl ws_conn;
 
-void wait(int);
 void on_open(server*, connection_hdl);
 void on_close(server*, connection_hdl);
 void on_message(server*, connection_hdl, server::message_ptr);
@@ -55,22 +54,22 @@ int main(int argc, char** argv) {
     }
   });
   thread main_thread([&]() {
-    int id = controller->getName().back() - '0';
-    controller->setManual(true);
-    controller->setTarget(controller->getPosition() + Vec{100, 0});
+    // int id = controller->getName().back() - '0';
+    // controller->setManual(true);
+    // controller->setTarget(controller->getPosition() + Vec{100, 0});
     while (true) {
-      if (connection_number == 1) {
-        try {
-          json data;
-          data["id"] = id;
-          data["type"] = "position";
-          data["value"]["x"] = controller->getPosition().x;
-          data["value"]["y"] = controller->getPosition().y;
-          ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
-        } catch(...) {
-          cout << "failed send data" << endl;
-        }
-      }
+      // if (connection_number == 1) {
+      //   try {
+      //     json data;
+      //     data["id"] = id;
+      //     data["type"] = "position";
+      //     data["value"]["x"] = controller->getPosition().x;
+      //     data["value"]["y"] = controller->getPosition().y;
+      //     ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+      //   } catch(...) {
+      //     cout << "failed send data" << endl;
+      //   }
+      // }
       controller->process();
     }
 

@@ -320,7 +320,7 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
           painter.drawLine(transformPoint(global->bezier_path[i]), transformPoint(global->bezier_path[i-1]));
       }
       if (global->control_points.size() > 1) {
-        for (size_t i = global->control_points.size()-2; i > global->control_points.size()-global->modified_astar_path.size(); i--) {
+        for (size_t i = global->control_points.size()-1; i > global->control_points.size()-global->modified_astar_path.size(); i--) {
           for (size_t j = 0; j < global->control_points[i].size(); j++) {
             painter.drawEllipse(transformPoint(global->control_points[i][j]), 2, 2);
             if (j != 0) {

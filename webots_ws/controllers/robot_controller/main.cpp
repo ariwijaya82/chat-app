@@ -22,7 +22,6 @@ server *ws_server = new server();
 int connection_number = 0;
 connection_hdl ws_conn;
 
-void wait(int);
 void on_open(server*, connection_hdl);
 void on_close(server*, connection_hdl);
 void on_message(server*, connection_hdl, server::message_ptr);
