@@ -62,15 +62,26 @@ class GlobalData {
     vector<vector<Vec>> obstacles;
     vector<vector<Vec>> obstacles_visible;
     vector<vector<Vec>> target_position;
+    vector<vector<Vec>> control_points;
     
     vector<Vec> visited_node;
     vector<Vec> astar_path;
     vector<Vec> bezier_path;
     vector<Vec> following_path;
+    vector<Vec> modified_astar_path;
 
-    json global, position;
+    int mode;
+    bool isGenerate;
+    bool isStart;
+    bool isStatic;
+    bool isConnected;
+    bool connected[6];
+
   private:
     string dir;
+    
+    json global;
+    json position;
 };
 
 #endif

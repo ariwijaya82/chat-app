@@ -13,6 +13,7 @@
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QMessageBox>
 
 #include "render_area.hpp"
 
@@ -22,12 +23,13 @@ class Panel : public QWidget {
     void setMode(int); 
 
   private:
-    RenderArea *render_area;
+    RenderArea *renderArea;
     GlobalData *global;
 
     QPushButton *leftButton;
-    QPushButton *middleButton;
     QPushButton *rightButton;
+    QPushButton *connectButton;
+    QPushButton *startButton;
     QCheckBox *staticCheck;
     QSlider *bezierSlider;
     QComboBox *pathCombo;
@@ -42,21 +44,10 @@ class Panel : public QWidget {
     QLabel *bezierSpinLabel;
     QLabel *bezierSliderLabel;
 
-    int mode;
-    bool isGenerate;
-    bool isStart;
-    bool isConnected;
-    bool isStatic;
-
     void handleLeftButton();
-    void handleMiddleButton();
     void handleRightButton();
-
-    void handlePathCombo(int);
-    void handleHeuristicCombo(int);
-    void handleNodeSpin(int);
-    void handleRadiusSpin(int);
-    void handleBezierSpin(int);
+    void handleConnectButton();
+    void handleStartButton();
 };
 
 #endif

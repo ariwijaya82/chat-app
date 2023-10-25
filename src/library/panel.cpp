@@ -3,10 +3,12 @@
 Panel::Panel(GlobalData* global) : global(global) {
   setFixedSize(1240, 640);
 
-  render_area = new RenderArea(global, this);
-  leftButton = new QPushButton("Generate", this);
-  middleButton = new QPushButton("Start", this);
-  rightButton = new QPushButton("Save", this);
+  renderArea = new RenderArea(global, this);
+  leftButton = new QPushButton(this);
+  rightButton = new QPushButton(this);
+  connectButton = new QPushButton(this);
+  startButton = new QPushButton(this);
+
   staticCheck = new QCheckBox("Static robot", this);
   bezierSlider = new QSlider(Qt::Horizontal, this);
   pathCombo = new QComboBox(this);
@@ -23,7 +25,7 @@ Panel::Panel(GlobalData* global) : global(global) {
 
   QHBoxLayout *mainLayout = new QHBoxLayout();
   mainLayout->setContentsMargins(0, 0, 0, 0);
-  mainLayout->addWidget(render_area);
+  mainLayout->addWidget(renderArea);
 
   QVBoxLayout *panelLayout = new QVBoxLayout();
   panelLayout->setContentsMargins(10, 10, 10, 10);
@@ -31,9 +33,13 @@ Panel::Panel(GlobalData* global) : global(global) {
 
   QHBoxLayout *buttonLayout = new QHBoxLayout();
   buttonLayout->addWidget(leftButton);
-  buttonLayout->addWidget(middleButton);
   buttonLayout->addWidget(rightButton);
   panelLayout->addLayout(buttonLayout);
+
+  QHBoxLayout *buttonLayoutSecond = new QHBoxLayout();
+  buttonLayoutSecond->addWidget(connectButton);
+  buttonLayoutSecond->addWidget(startButton);
+  panelLayout->addLayout(buttonLayoutSecond);
 
   panelLayout->addWidget(staticCheck);
   panelLayout->addWidget(bezierSliderLabel);
@@ -53,183 +59,223 @@ Panel::Panel(GlobalData* global) : global(global) {
   setMode(0);
 
   connect(leftButton, &QPushButton::clicked, this, &Panel::handleLeftButton);
-  connect(middleButton, &QPushButton::clicked, this, &Panel::handleMiddleButton);
   connect(rightButton, &QPushButton::clicked, this, &Panel::handleRightButton);
+  connect(connectButton, &QPushButton::clicked, this, &Panel::handleConnectButton);
+  connect(startButton, &QPushButton::clicked, this, &Panel::handleStartButton);
 
-  connect(staticCheck, &QCheckBox::stateChanged, this, [&](int state) {
-    // todo: handle this
-  });
-  connect(bezierSlider, &QSlider::sliderMoved, this, [&](int value) {
-    // todo: handle this
-  });
+  connect(staticCheck, &QCheckBox::stateChanged, this, [&](int value) { renderArea->handlePanelChange("staticCheck", value); });
+
+  bezierSlider->setMinimum(0);
+  bezierSlider->setMaximum(100);
+  connect(bezierSlider, &QSlider::sliderMoved, this, [&](int value) { renderArea->handlePanelChange("bezierSlider", value); });
 
   pathCombo->addItems(QStringList{"1", "2", "3", "4", "5"});
   pathCombo->setCurrentIndex(global->path_number);
-  connect(pathCombo, &QComboBox::currentIndexChanged, this, &Panel::handlePathCombo);
+  connect(pathCombo, &QComboBox::currentIndexChanged, this, [&](int value) { renderArea->handlePanelChange("pathCombo", value); });
 
   heuristicCombo->addItems(QStringList{"Manhattan", "Diagonal", "Octile", "Euclidean"});
   heuristicCombo->setCurrentIndex(global->heuristic_type-1);
-  connect(heuristicCombo, &QComboBox::currentIndexChanged, this, [&](int index) {
-    global->heuristic_type = index + 1;
-  });
+  connect(heuristicCombo, &QComboBox::currentIndexChanged, this, [&](int value) { renderArea->handlePanelChange("heuristicCombo", value); });
 
   nodeSpin->setMinimum(10);
   nodeSpin->setMaximum(100);
   nodeSpin->setValue(global->node_distance);
-  connect(nodeSpin, &QSpinBox::valueChanged, this, [&](int value) {
-    global->node_distance = value;
-    global->updateObstacles();
-
-    render_area->render();
-
-  });
+  connect(nodeSpin, &QSpinBox::valueChanged, this, [&](int value) { renderArea->handlePanelChange("nodeSpin", value); });
 
   radiusSpin->setMinimum(10);
   radiusSpin->setMaximum(100);
   radiusSpin->setValue(global->robot_radius/2);
-  connect(radiusSpin, &QSpinBox::valueChanged, this, [&](int value) {
-    global->robot_radius = value * 2;
-    global->updateObstacles();
-
-    render_area->render();
-
-  });
+  connect(radiusSpin, &QSpinBox::valueChanged, this, [&](int value) { renderArea->handlePanelChange("radiusSpin", value); });
 
   bezierSpin->setMinimum(1);
   bezierSpin->setMaximum(10);
   bezierSpin->setValue(global->bezier_curvature);
-  connect(bezierSpin, &QSpinBox::valueChanged, this, [&](int value) {
-    global->bezier_curvature = value;
-  });
+  connect(bezierSpin, &QSpinBox::valueChanged, this, [&](int value) { renderArea->handlePanelChange("bezierSpin", value); });
 }
 
-void Panel::setMode(int mode_) {
-  mode = mode_;
-  render_area->setMode(mode);
-  switch (mode)
-  {
-  case 0:
-    leftButton->setVisible(true);
-    middleButton->setVisible(true);
-    rightButton->setVisible(true);
-    staticCheck->setVisible(true);
+void Panel::setMode(int mode) {
+  global->mode = mode;
+  renderArea->setMode();
+  switch (global->mode) {
+    case 0: {
+      leftButton->setVisible(true);
+      rightButton->setVisible(true);
+      connectButton->setVisible(true);
+      startButton->setVisible(true);
 
-    leftButton->setText("Generate");
-    middleButton->setText("Start");
-    rightButton->setText("Save");
+      staticCheck->setVisible(true);
+      bezierSlider->setVisible(false);
+      pathCombo->setVisible(true);
+      heuristicCombo->setVisible(true);
+      nodeSpin->setVisible(true);
+      radiusSpin->setVisible(true);
+      bezierSpin->setVisible(true);
 
-    bezierSlider->setVisible(false);
-    pathCombo->setVisible(true);
-    heuristicCombo->setVisible(true);
-    nodeSpin->setVisible(true);
-    radiusSpin->setVisible(true);
-    bezierSpin->setVisible(true);
-    pathLabel->setVisible(true);
-    heuristicLabel->setVisible(true);
-    nodeLabel->setVisible(true);
-    radiusLabel->setVisible(true);
-    bezierSpinLabel->setVisible(true);
-    bezierSliderLabel->setVisible(false);
-    break;
+      pathLabel->setVisible(true);
+      heuristicLabel->setVisible(true);
+      nodeLabel->setVisible(true);
+      radiusLabel->setVisible(true);
+      bezierSpinLabel->setVisible(true);
+      bezierSliderLabel->setVisible(false);
+      
+      leftButton->setText("Generate");
+      rightButton->setText("Save");
+      connectButton->setText("Connect");
+      startButton->setText("Start");
+      staticCheck->setCheckState(global->isStatic ? Qt::Checked : Qt::Unchecked);
+      pathCombo->setCurrentIndex(global->path_number);
+      heuristicCombo->setCurrentIndex(global->heuristic_type-1);
+      nodeSpin->setValue(global->node_distance);
+      radiusSpin->setValue(global->robot_radius/2);
+      bezierSpin->setValue(global->bezier_curvature);
+      leftButton->setEnabled(true);
+      break;
+    }
 
-  case 1:
-    leftButton->setVisible(true);
-    middleButton->setVisible(true);
-    rightButton->setVisible(true);
-    staticCheck->setVisible(true);
+    case 1: {
+      leftButton->setVisible(true);
+      rightButton->setVisible(true);
+      connectButton->setVisible(false);
+      startButton->setVisible(false);
 
-    leftButton->setText("Connect");
-    middleButton->setText("Start");
-    rightButton->setText("Save");
+      staticCheck->setVisible(false);
+      bezierSlider->setVisible(false);
+      pathCombo->setVisible(false);
+      heuristicCombo->setVisible(true);
+      nodeSpin->setVisible(true);
+      radiusSpin->setVisible(false);
+      bezierSpin->setVisible(false);
+      
+      pathLabel->setVisible(false);
+      heuristicLabel->setVisible(true);
+      nodeLabel->setVisible(true);
+      radiusLabel->setVisible(false);
+      bezierSpinLabel->setVisible(false);
+      bezierSliderLabel->setVisible(false);
 
-    bezierSlider->setVisible(false);
-    pathCombo->setVisible(false);
-    heuristicCombo->setVisible(false);
-    nodeSpin->setVisible(false);
-    radiusSpin->setVisible(false);
-    bezierSpin->setVisible(false);
-    pathLabel->setVisible(false);
-    heuristicLabel->setVisible(false);
-    nodeLabel->setVisible(false);
-    radiusLabel->setVisible(false);
-    bezierSpinLabel->setVisible(false);
-    bezierSliderLabel->setVisible(false);
-    break;
+      leftButton->setText("Next");
+      rightButton->setText("Reset");
+      heuristicCombo->setCurrentIndex(global->heuristic_type-1);
+      nodeSpin->setValue(global->node_distance);
+      leftButton->setEnabled(true);
+      break;
+    }
 
-  case 2:
-    leftButton->setVisible(true);
-    middleButton->setVisible(true);
-    rightButton->setVisible(false);
-    staticCheck->setVisible(false);
+    case 2: {
+      leftButton->setVisible(true);
+      rightButton->setVisible(false);
+      connectButton->setVisible(false);
+      startButton->setVisible(false);
 
-    leftButton->setText("Next");
-    middleButton->setText("Reset");
-
-    bezierSlider->setVisible(false);
-    pathCombo->setVisible(false);
-    heuristicCombo->setVisible(true);
-    nodeSpin->setVisible(true);
-    radiusSpin->setVisible(false);
-    bezierSpin->setVisible(false);
-    pathLabel->setVisible(false);
-    heuristicLabel->setVisible(true);
-    nodeLabel->setVisible(true);
-    radiusLabel->setVisible(false);
-    bezierSpinLabel->setVisible(false);
-    bezierSliderLabel->setVisible(false);
-    break;
-
-  case 3:
-    leftButton->setVisible(true);
-    middleButton->setVisible(false);
-    rightButton->setVisible(false);
-    staticCheck->setVisible(false);
-
-    leftButton->setText("Reset");
-
-    bezierSlider->setVisible(true);
-    pathCombo->setVisible(false);
-    heuristicCombo->setVisible(false);
-    nodeSpin->setVisible(true);
-    radiusSpin->setVisible(false);
-    bezierSpin->setVisible(true);
-    pathLabel->setVisible(false);
-    heuristicLabel->setVisible(false);
-    nodeLabel->setVisible(true);
-    radiusLabel->setVisible(false);
-    bezierSpinLabel->setVisible(true);
-    bezierSliderLabel->setVisible(true);
-    break;
-  
-  default:
-    break;
+      staticCheck->setVisible(false);
+      bezierSlider->setVisible(true);
+      pathCombo->setVisible(false);
+      heuristicCombo->setVisible(false);
+      nodeSpin->setVisible(true);
+      radiusSpin->setVisible(false);
+      bezierSpin->setVisible(true);
+      
+      pathLabel->setVisible(false);
+      heuristicLabel->setVisible(false);
+      nodeLabel->setVisible(true);
+      radiusLabel->setVisible(false);
+      bezierSpinLabel->setVisible(true);
+      bezierSliderLabel->setVisible(true);
+      
+      leftButton->setText("Generate");
+      nodeSpin->setValue(global->node_distance);
+      bezierSlider->setValue(0);
+      bezierSlider->setEnabled(false);
+      leftButton->setEnabled(true);
+      break;
+    }
   }
+
 }
 
 void Panel::handleLeftButton() {
-  global->path_number = 4;
-  global->updatePosition();
-  global->updateObstacles();
+  switch (global->mode) {
+    case 0: {
+      if (global->isGenerate) {
+        global->isGenerate = false;
+        leftButton->setText("Generate");
+        renderArea->setGeneratePath(false);
+      } else {
+        global->isGenerate = true;
+        leftButton->setText("Reset");
+        renderArea->setGeneratePath(true);
+      }
+      break;
+    }
+    
+    case 1: {
+      if (!global->isGenerate) leftButton->setEnabled(true);
+      if (renderArea->setPathNext(true)) {
+        leftButton->setEnabled(false);
+      }
+      break;
+    }
 
-  render_area->render();
-}
-
-void Panel::handleMiddleButton() {
-  
+    case 2: {
+      if (global->isGenerate) {
+        global->isGenerate = false;
+        leftButton->setText("Generate");
+        bezierSlider->setEnabled(false);
+        bezierSlider->setValue(0);
+        renderArea->setModifiedPath(false);
+      } else {
+        if (global->astar_path.size() < 3) {
+          QMessageBox::information(this, "Warning", "Please select at least 3 points");
+          break;
+        }
+        global->isGenerate = true;
+        leftButton->setText("Reset");
+        bezierSlider->setEnabled(true);
+        renderArea->setModifiedPath(true);
+      }
+      break;
+    }
+  }
+  renderArea->render();
 }
 
 void Panel::handleRightButton() {
-  
+  switch (global->mode) {
+    case 0: {
+      try {
+        global->saveValue();
+        QMessageBox::information(this, "Success", "Success save data");
+      } catch(...) {
+        QMessageBox::information(this, "Error", "Failed save data");
+      }
+      break;
+    }
+
+    case 1: {
+      renderArea->setPathNext(false);
+      leftButton->setEnabled(true);
+      break;
+    }
+  }
+  renderArea->render();
 }
 
-void Panel::handlePathCombo(int value) {
-  global->path_number = value;
-  global->updatePosition();
-  global->updateObstacles();
-
-  render_area->render();
+void Panel::handleConnectButton() {
+  if (global->isConnected) {
+    global->isConnected = false;
+    connectButton->setText("Connect");
+  } else {
+    global->isConnected = true;
+    connectButton->setText("Disconnect");
+  }
 }
 
-void Panel::handleHeuristicCombo(int value) {
-  
+void Panel::handleStartButton() {
+  if (global->isStart) {
+    global->isStart = false;
+    startButton->setText("Start");
+  } else {
+    global->isStart = true;
+    startButton->setText("Stop");
+  }
 }

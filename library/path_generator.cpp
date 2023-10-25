@@ -104,8 +104,9 @@ Node* PathGenerator::findNodeOnList(vector<Node*>& nodes, Vec coordinate) {
 }
 
 void PathGenerator::releaseNodes(vector<Node*>& nodes) {
-    for (size_t i = 0; i < nodes.size(); i++)
+    for (size_t i = 0; i < nodes.size(); i++) 
         delete nodes[i];
+    nodes.clear();
 }
 
 void PathGenerator::generatePath() {
@@ -150,11 +151,10 @@ bool PathGenerator::astar_find_next_node() {
           current_it = it;
       }
   }
-
-  if (current->coordinate == global->ball) return true;
-
   closeList.push_back(current);
   openList.erase(current_it);
+
+  if (current->coordinate == global->ball) return true;
   return false;
 }
 
@@ -193,8 +193,9 @@ void PathGenerator::process_path() {
   global->astar_path = path;
 }
 
-void PathGenerator::modified_path() {
-  if (global->astar_path.size() < 5) return;
+void PathGenerator::modified_path(bool ignore_head) {
+  if (ignore_head && global->astar_path.size() < 5) return;
+  if (!ignore_head && global->astar_path.size() < 3) return;
 
   auto get_dir_func = [](Vec point1, Vec point2) {
     Vec delta = point1-point2;
@@ -211,10 +212,16 @@ void PathGenerator::modified_path() {
 
   vector<Vec> filter_path;
   filter_path.push_back(global->astar_path[0]);
-  filter_path.push_back(global->astar_path[1]);
-  size_t i = 2;
-  int dir = get_dir_func(global->astar_path[1], global->astar_path[2]);
-  while (i != global->astar_path.size()-2) {
+  size_t start_index;
+  if (ignore_head) {
+    start_index = 2;
+    filter_path.push_back(global->astar_path[1]);
+  } else {
+    start_index = 1;
+  }
+  size_t i = start_index;
+  int dir = get_dir_func(global->astar_path[start_index-1], global->astar_path[start_index]);
+  while (i != global->astar_path.size()-start_index) {
     int new_dir = get_dir_func(global->astar_path[i], global->astar_path[i+1]);
     if (dir != new_dir) {
       for (int j = 0; j < global->bezier_curvature; j++) filter_path.push_back(global->astar_path[i]);
@@ -224,10 +231,13 @@ void PathGenerator::modified_path() {
     }
     i++;
   }
-  filter_path.push_back(global->astar_path[global->astar_path.size()-2]);
+  if (ignore_head) {
+    filter_path.push_back(global->astar_path[global->astar_path.size()-2]);
+  }
   filter_path.push_back(global->astar_path[global->astar_path.size()-1]);
 
-  global->astar_path = filter_path;
+  if (ignore_head) global->astar_path = filter_path;
+  else global->modified_astar_path = filter_path;
 }
 
 void PathGenerator::generateSmoothPath(int numPoints) {
@@ -250,13 +260,13 @@ void PathGenerator::generateSmoothPath(int numPoints) {
     global->bezier_path = result;
 }
 
-vector<vector<Vec>> PathGenerator::getBezierPoints(int numPoints, int index) {
+void PathGenerator::getBezierPoints(int numPoints, int index) {
   vector<Vec> result(index+1);
   vector<vector<Vec>> control_points;
   for (int i = 0; i <= index; ++i) {
       double t = static_cast<double>(i) / numPoints;
       vector<Vec> points;
-      for (Vec point : global->astar_path) {
+      for (Vec point : global->modified_astar_path) {
           points.push_back(point);
       }
       int n = points.size();
@@ -272,5 +282,5 @@ vector<vector<Vec>> PathGenerator::getBezierPoints(int numPoints, int index) {
       result[i] = points[0];
   }
   global->bezier_path = result;
-  return control_points;
+  global->control_points = control_points;
 }

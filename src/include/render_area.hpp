@@ -15,9 +15,12 @@ class RenderArea : public QWidget {
     
     void render();
 
-    void setMode(int);
+    void setMode();
     void setAnimate(bool);
     void setGeneratePath(bool);
+    bool setPathNext(bool);
+    void setModifiedPath(bool);
+    void handlePanelChange(string widget, int value=0);
 
   protected:
     void paintEvent(QPaintEvent*) override;
@@ -30,9 +33,26 @@ class RenderArea : public QWidget {
     GlobalData *global;
     PathGenerator *generator;
 
-    int mode = 0;
+    QPoint mouseStart;
+    QPoint mouseCurr;
+    QPoint mouseRelease;
+    QPoint mouseOffset;
+
+    bool isMouseClicked = false;
+    bool isMouseInStart = false;
+    bool isMouseInTarget = false;
+    bool isMouseInNode = false;
+    bool isMouseInTarPos = false;
+    bool isMouseInEnemy = false;
+    bool isSelectEnemy = false;
+    
+    size_t index_enemy;
+    size_t index_enemy_select;
+    size_t index_i;
+    size_t index_j;
 
     QPoint transformPoint(Vec);
+    Vec transformPoint(QPoint);
 };
 
 #endif

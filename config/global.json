@@ -1,10 +1,1 @@
-{
-  "bezier_curvature": 5,
-  "heuristic_type": 4,
-  "node_distance": 30.0,
-  "path_number": 0,
-  "robot_radius": 50.0,
-  "screen_height": 600,
-  "screen_padding": 20,
-  "screen_width": 900
-}
+{"bezier_curvature":5,"heuristic_type":4,"node_distance":30.0,"path_number":1,"robot_radius":50.0,"screen_height":600,"screen_padding":20,"screen_width":900}

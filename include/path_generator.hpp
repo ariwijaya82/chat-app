@@ -34,9 +34,8 @@ class PathGenerator {
         bool astar_find_next_node();
         void astar_find_neighbors();
         void process_path();
-        void modified_path();
-        
-        vector<vector<Vec>> getBezierPoints(int, int);
+        void modified_path(bool ignore_head=true);
+        void getBezierPoints(int, int);
 
         vector<Node*> openList, closeList;
         Node* current;

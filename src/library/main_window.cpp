@@ -16,8 +16,6 @@ void MainWindow::createActions() {
   simulateAct = new QAction("Simulate", this);
   simulateAct->setCheckable(true);
   simulateAct->setChecked(true);
-  remoteAct = new QAction("Remote", this);
-  remoteAct->setCheckable(true);
   astarAct = new QAction("AStar", this);
   astarAct->setCheckable(true);
   bezierAct = new QAction("Bezier", this);
@@ -46,7 +44,6 @@ void MainWindow::createActions() {
 void MainWindow::createMenus() {
   modeMenu = menuBar()->addMenu("Mode");
   modeMenu->addAction(simulateAct);
-  modeMenu->addAction(remoteAct);
   modeMenu->addAction(astarAct);
   modeMenu->addAction(bezierAct);
 
@@ -63,14 +60,11 @@ void MainWindow::connectActions() {
   connect(simulateAct, &QAction::triggered, this, [&]() {
     handleModeChanged(0);
   });
-  connect(remoteAct, &QAction::triggered, this, [&]() {
+  connect(astarAct, &QAction::triggered, this, [&]() {
     handleModeChanged(1);
   });
-  connect(astarAct, &QAction::triggered, this, [&]() {
-    handleModeChanged(2);
-  });
   connect(bezierAct, &QAction::triggered, this, [&]() {
-    handleModeChanged(3);
+    handleModeChanged(2);
   });
 
   connect(fieldAct, &QAction::triggered, this, [&](bool checked) {
@@ -95,32 +89,29 @@ void MainWindow::connectActions() {
 
 void MainWindow::handleModeChanged(int index) {
   simulateAct->setChecked(false);
-  remoteAct->setChecked(false);
   astarAct->setChecked(false);
   bezierAct->setChecked(false);
 
   panel->setMode(index);
 
-  switch (index)
-  {
-  case 0:
-    simulateAct->setChecked(true);
-    break;
+  switch (index) {
+    case 0: {
+      simulateAct->setChecked(true);
+      viewMenu->setEnabled(true);
+      break;
+    }
 
-  case 1:
-    remoteAct->setChecked(true);
-    break;
+    case 1: {
+      astarAct->setChecked(true);
+      viewMenu->setEnabled(false);
+      break;
+    }
 
-  case 2:
-    astarAct->setChecked(true);
-    break;
-
-  case 3:
-    bezierAct->setChecked(true);
-    break;
-  
-  default:
-    break;
+    case 2: {
+      bezierAct->setChecked(true);
+      viewMenu->setEnabled(false);
+      break;
+    }
   }
 }
 

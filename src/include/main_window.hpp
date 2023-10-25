@@ -18,7 +18,6 @@ class MainWindow : public QMainWindow {
     QMenu *modeMenu;
     QMenu *viewMenu;
     QAction *simulateAct;
-    QAction *remoteAct;
     QAction *astarAct;
     QAction *bezierAct;
     QAction *fieldAct;
