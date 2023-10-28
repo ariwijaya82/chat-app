@@ -4,6 +4,13 @@ Panel::Panel(GlobalData* global) : global(global) {
   setFixedSize(1240, 640);
 
   renderArea = new RenderArea(global, this);
+  for (int i = 0; i < 6; i++) {
+    robotSocket[i] = new QWebSocket();
+  }
+
+  timer = new QTimer(this);
+  connect(timer, &QTimer::timeout, this, &Panel::handleTimer);
+
   leftButton = new QPushButton(this);
   rightButton = new QPushButton(this);
   connectButton = new QPushButton(this);
@@ -122,13 +129,25 @@ void Panel::setMode(int mode) {
       rightButton->setText("Save");
       connectButton->setText("Connect");
       startButton->setText("Start");
+      
       staticCheck->setCheckState(global->isStatic ? Qt::Checked : Qt::Unchecked);
       pathCombo->setCurrentIndex(global->path_number);
       heuristicCombo->setCurrentIndex(global->heuristic_type-1);
       nodeSpin->setValue(global->node_distance);
       radiusSpin->setValue(global->robot_radius/2);
       bezierSpin->setValue(global->bezier_curvature);
+      
       leftButton->setEnabled(true);
+      startButton->setEnabled(false);
+      heuristicCombo->setEnabled(true);
+      nodeSpin->setEnabled(true);
+      try {
+        for (int i = 0; i < 6; i++) {
+          robotSocket[i]->close();
+        }
+      } catch (...) {
+        cout << "failed to disconnect socket" << endl;
+      }
       break;
     }
 
@@ -155,9 +174,13 @@ void Panel::setMode(int mode) {
 
       leftButton->setText("Next");
       rightButton->setText("Reset");
+
       heuristicCombo->setCurrentIndex(global->heuristic_type-1);
       nodeSpin->setValue(global->node_distance);
+      
       leftButton->setEnabled(true);
+      heuristicCombo->setEnabled(true);
+      nodeSpin->setEnabled(true);
       break;
     }
 
@@ -183,10 +206,13 @@ void Panel::setMode(int mode) {
       bezierSliderLabel->setVisible(true);
       
       leftButton->setText("Generate");
+      
       nodeSpin->setValue(global->node_distance);
       bezierSlider->setValue(0);
-      bezierSlider->setEnabled(false);
+      
       leftButton->setEnabled(true);
+      bezierSlider->setEnabled(false);
+      nodeSpin->setEnabled(true);
       break;
     }
   }
@@ -213,6 +239,8 @@ void Panel::handleLeftButton() {
       if (renderArea->setPathNext(true)) {
         leftButton->setEnabled(false);
       }
+      heuristicCombo->setEnabled(false);
+      nodeSpin->setEnabled(false);
       break;
     }
 
@@ -223,6 +251,7 @@ void Panel::handleLeftButton() {
         bezierSlider->setEnabled(false);
         bezierSlider->setValue(0);
         renderArea->setModifiedPath(false);
+        nodeSpin->setEnabled(true);
       } else {
         if (global->astar_path.size() < 3) {
           QMessageBox::information(this, "Warning", "Please select at least 3 points");
@@ -232,6 +261,7 @@ void Panel::handleLeftButton() {
         leftButton->setText("Reset");
         bezierSlider->setEnabled(true);
         renderArea->setModifiedPath(true);
+        nodeSpin->setEnabled(false);
       }
       break;
     }
@@ -243,7 +273,11 @@ void Panel::handleRightButton() {
   switch (global->mode) {
     case 0: {
       try {
-        global->saveValue();
+        if (global->isConnected) {
+          global->saveTargetPosition();
+        } else {
+          global->saveValue();
+        }
         QMessageBox::information(this, "Success", "Success save data");
       } catch(...) {
         QMessageBox::information(this, "Error", "Failed save data");
@@ -254,6 +288,8 @@ void Panel::handleRightButton() {
     case 1: {
       renderArea->setPathNext(false);
       leftButton->setEnabled(true);
+      heuristicCombo->setEnabled(true);
+      nodeSpin->setEnabled(true);
       break;
     }
   }
@@ -262,11 +298,88 @@ void Panel::handleRightButton() {
 
 void Panel::handleConnectButton() {
   if (global->isConnected) {
-    global->isConnected = false;
-    connectButton->setText("Connect");
+    try {
+      for (int i = 0; i < 6; i++) {
+        robotSocket[i]->close();
+      }
+    } catch (...) {
+      cout << "failed to disconnect socket" << endl;
+    }
   } else {
-    global->isConnected = true;
-    connectButton->setText("Disconnect");
+    try {
+      connect(robotSocket[0], &QWebSocket::connected, this, [&](){
+        bool isStatic = global->isStatic;
+        renderArea->setMode();
+
+        pathCombo->setCurrentIndex(global->path_number);
+        heuristicCombo->setCurrentIndex(global->heuristic_type-1);
+        nodeSpin->setValue(global->node_distance);
+        radiusSpin->setValue(global->robot_radius/2);
+        bezierSpin->setValue(global->bezier_curvature);
+
+        leftButton->setText("Generate");
+        connectButton->setText("Disconnect");
+        leftButton->setEnabled(false);
+        startButton->setEnabled(true);
+        staticCheck->setEnabled(false);
+        pathCombo->setEnabled(false);
+        heuristicCombo->setEnabled(false);
+        nodeSpin->setEnabled(false);
+        radiusSpin->setEnabled(false);
+        bezierSpin->setEnabled(false);
+
+        global->isConnected = true;
+        global->isStatic = isStatic;
+        global->connected[0] = true;
+        renderArea->render();
+      });
+      connect(robotSocket[1], &QWebSocket::connected, this, [&](){ global->connected[1] = true; renderArea->render(); });
+      connect(robotSocket[2], &QWebSocket::connected, this, [&](){ global->connected[2] = true; renderArea->render(); });
+      connect(robotSocket[3], &QWebSocket::connected, this, [&](){ global->connected[3] = true; renderArea->render(); });
+      connect(robotSocket[4], &QWebSocket::connected, this, [&](){ global->connected[4] = true; renderArea->render(); });
+      connect(robotSocket[5], &QWebSocket::connected, this, [&](){ global->connected[5] = true; renderArea->render(); });
+
+      connect(robotSocket[0], &QWebSocket::disconnected, this, [&](){
+        if (global->isConnected) {
+          renderArea->setMode();
+          
+          connectButton->setText("Connect");
+          startButton->setText("Start");
+          startButton->setEnabled(false);
+          staticCheck->setEnabled(true);
+          pathCombo->setEnabled(true);
+          heuristicCombo->setEnabled(true);
+          nodeSpin->setEnabled(true);
+          radiusSpin->setEnabled(true);
+          bezierSpin->setEnabled(true);
+          leftButton->setEnabled(true);
+          
+          global->isConnected = false;
+          global->isStart = false;
+          global->connected[0] = false;
+          renderArea->render();
+        }
+      });
+      connect(robotSocket[1], &QWebSocket::disconnected, this, [&](){ global->connected[1] = false; renderArea->render(); });
+      connect(robotSocket[2], &QWebSocket::disconnected, this, [&](){ global->connected[2] = false; renderArea->render(); });
+      connect(robotSocket[3], &QWebSocket::disconnected, this, [&](){ global->connected[3] = false; renderArea->render(); });
+      connect(robotSocket[4], &QWebSocket::disconnected, this, [&](){ global->connected[4] = false; renderArea->render(); });
+      connect(robotSocket[5], &QWebSocket::disconnected, this, [&](){ global->connected[5] = false; renderArea->render(); });
+      
+      connect(robotSocket[0], &QWebSocket::textMessageReceived, this, [&](const QString& message) { handleSocketMessage(0, message.toStdString()); }); 
+      connect(robotSocket[1], &QWebSocket::textMessageReceived, this, [&](const QString& message) { handleSocketMessage(1, message.toStdString()); }); 
+      connect(robotSocket[2], &QWebSocket::textMessageReceived, this, [&](const QString& message) { handleSocketMessage(2, message.toStdString()); }); 
+      connect(robotSocket[3], &QWebSocket::textMessageReceived, this, [&](const QString& message) { handleSocketMessage(3, message.toStdString()); }); 
+      connect(robotSocket[4], &QWebSocket::textMessageReceived, this, [&](const QString& message) { handleSocketMessage(4, message.toStdString()); }); 
+      connect(robotSocket[5], &QWebSocket::textMessageReceived, this, [&](const QString& message) { handleSocketMessage(5, message.toStdString()); }); 
+    
+      for (int i = 0; i < 6; i++) {
+        QString url = "ws://127.0.0.1:" + QString::number(9000+i);
+        robotSocket[i]->open(QUrl(url));
+      }
+    } catch (...) {
+      cout << "failed to connect socket" << endl;
+    }
   }
 }
 
@@ -274,8 +387,122 @@ void Panel::handleStartButton() {
   if (global->isStart) {
     global->isStart = false;
     startButton->setText("Start");
+    timer->stop();
+
+    json data;
+    data["type"] = "run";
+    data["value"] = "stop";
+    for (int i = 0; i < 6; i++) {
+      robotSocket[i]->sendTextMessage(QString(to_string(data).c_str()));
+    }
   } else {
     global->isStart = true;
     startButton->setText("Stop");
+    timer->start(50);
+    
+    json data;
+    data["type"] = "run";
+    data["value"] = "start";
+
+    robotSocket[0]->sendTextMessage(QString(to_string(data).c_str()));
+    for (int i = 1; i < 6; i++) {
+      if (global->isStatic) data["value"] = "stop";
+      else if (global->target_index[i-1] != global->target_position[i-1].size()) {
+        Vec point = global->target_position[i-1][global->target_index[i-1]];
+        data["target"]["x"] = point.x;
+        data["target"]["y"] = point.y;
+      } else data["value"] = "stop";
+      robotSocket[i]->sendTextMessage(QString(to_string(data).c_str()));
+    }
+  }
+}
+
+void Panel::handleTimer() {
+  renderArea->render();
+  if (global->isStart && !global->isStatic) {
+    global->timer += timer->interval();
+    global->interval += timer->interval();
+    if (global->interval >= 3000) {
+      global->interval = 0;
+      global->updateObstacles();
+
+      json data;
+      data["type"] = "update";
+      data["value"] = json::array();
+      for (auto &obstacles : global->obstacles) {
+        json arr = json::array();
+        for (auto &obstacle : obstacles) {
+          json temp;
+          temp["x"] = obstacle.x;
+          temp["y"] = obstacle.y;
+          arr.push_back(temp);
+        }
+        data["value"].push_back(arr);
+      }
+      robotSocket[0]->sendTextMessage(QString(to_string(data).c_str()));
+    }
+  }
+}
+
+void Panel::handleSocketMessage(int i, string message) {
+  json recv_data = json::parse(message);
+  string type = recv_data["type"].template get<string>();
+  if (i == 0) { // robot
+    if (type == "position") {
+      global->robot = Vec(
+        recv_data["value"]["x"].template get<double>(),
+        recv_data["value"]["y"].template get<double>()
+      );
+      global->target = Vec(
+        recv_data["value"]["target"]["x"].template get<double>(),
+        recv_data["value"]["target"]["y"].template get<double>()
+      );
+      global->direction[0] = recv_data["value"]["dir"].template get<double>();
+    } else if (type == "astar_path") {
+      global->astar_path.clear();
+      for (auto &item : recv_data["value"]) {
+        global->astar_path.push_back(Vec(
+          item["x"].template get<double>(),
+          item["y"].template get<double>()
+        ));
+      }
+    } else if (type == "bezier_path") {
+      global->bezier_path.clear();
+      for (auto &item : recv_data["value"]) {
+        global->bezier_path.push_back(Vec(
+          item["x"].template get<double>(),
+          item["y"].template get<double>()
+        ));
+      }
+    } else if (type == "finished") {
+      global->isStart = false;
+      startButton->setEnabled(false);
+    }
+  } else { // enemy
+    if (type == "position") {
+      global->enemies[i-1] = Vec(
+        recv_data["value"]["x"].template get<double>(),
+        recv_data["value"]["y"].template get<double>()
+      );
+      global->direction[i] = recv_data["value"]["dir"].template get<double>();
+    } else if (type == "finished") {
+      if (global->target_index[i-1] != global->target_position[i-1].size()) {
+        Vec point = global->target_position[i-1][global->target_index[i-1]];
+        int target_x = recv_data["target"]["x"].template get<int>();
+        int target_y = recv_data["target"]["y"].template get<int>();
+        if (abs(target_x-point.x) < global->robot_radius/2 && abs(target_y-point.y) < global->robot_radius/2)
+          global->target_index[i-1]++;
+        json data;
+        data["type"] = "target";
+        data["value"]["x"] = point.x;
+        data["value"]["y"] = point.y;
+        robotSocket[i]->sendTextMessage(QString(to_string(data).c_str()));
+      } else {
+        json data;
+        data["type"] = "run";
+        data["value"] = "stop";
+        robotSocket[i]->sendTextMessage(QString(to_string(data).c_str()));
+      }
+    }
   }
 }

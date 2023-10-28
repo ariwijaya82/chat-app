@@ -16,7 +16,6 @@ class RenderArea : public QWidget {
     void render();
 
     void setMode();
-    void setAnimate(bool);
     void setGeneratePath(bool);
     bool setPathNext(bool);
     void setModifiedPath(bool);
@@ -29,7 +28,6 @@ class RenderArea : public QWidget {
     void mouseReleaseEvent(QMouseEvent*) override;
 
   private:
-    QTimer *timer;
     GlobalData *global;
     PathGenerator *generator;
 

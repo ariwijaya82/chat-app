@@ -9,9 +9,6 @@ RenderArea::RenderArea(GlobalData* global, QWidget* parent) : QWidget(parent), g
   setFixedSize(940 ,640);
   setMouseTracking(true);
 
-  timer = new QTimer(this);
-  connect(timer, &QTimer::timeout, this, &RenderArea::render);
-  
   generator = new PathGenerator(global);
 }
 
@@ -25,6 +22,7 @@ void RenderArea::setMode() {
       global->isGenerate = false;
       global->isStart = false;
       global->isStatic = false;
+      global->isConnected = false;
 
       global->astar_path.clear();
       global->bezier_path.clear();
@@ -34,12 +32,24 @@ void RenderArea::setMode() {
       global->updatePosition();
       global->updateObstacles();
       global->updateTargetPosition();
+
+      global->timer = 0;
+      global->interval = 0;
+
+      for (int i = 0; i < 6; i++){
+        if (i == 0) global->direction[i] = 0;
+        else global->direction[i] = M_PI;
+        global->connected[i] = false;
+      }
+      for (int i = 0; i < 5; i++) {
+        global->target_index[i] = 0;
+      }
       break;
     }
     
     case 1: {
       global->isGenerate = false;
-      global->astar_path.clear();
+
       global->obstacles.clear();
       global->obstacles.push_back(vector<Vec>());
       generator->openList.clear();
@@ -49,6 +59,7 @@ void RenderArea::setMode() {
 
     case 2: {
       global->isGenerate = false;
+
       global->astar_path.clear();
       global->bezier_path.clear();
       global->control_points.clear();
@@ -57,11 +68,6 @@ void RenderArea::setMode() {
     }
   }
   update();
-}
-
-void RenderArea::setAnimate(bool value) {
-  if (value) timer->start(50);
-  else timer->stop();
 }
 
 void RenderArea::setGeneratePath(bool value) {
@@ -97,6 +103,9 @@ bool RenderArea::setPathNext(bool val) {
     generator->astar_find_neighbors();
   } else {
     global->isGenerate = false;
+
+    global->obstacles.clear();
+    global->obstacles.push_back(vector<Vec>());
     generator->openList.clear();
     generator->closeList.clear();
   }
@@ -130,7 +139,7 @@ void RenderArea::handlePanelChange(string widget, int value) {
     global->updateTargetPosition();
     if (global->isGenerate) setGeneratePath(true);
   } else if (widget == "heuristicCombo") {
-    global->heuristic_type = value;
+    global->heuristic_type = value+1;
     if (global->isGenerate) setGeneratePath(true);
   } else if (widget == "nodeSpin") {
     global->node_distance = value;
@@ -185,6 +194,13 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
       painter.setPen(Qt::black);
       painter.setBrush(Qt::black);
       painter.drawEllipse(transformPoint(global->robot), 8, 8);
+      painter.drawLine(
+        transformPoint(global->robot),
+        transformPoint(global->robot +
+          (Vec(cos(global->direction[0]), -sin(global->direction[0])) * (global->robot_radius / 2))));
+      painter.setPen(global->connected[0] ? Qt::blue : Qt::black);
+      painter.drawText(transformPoint(global->robot + Vec(-10, 20)), "Robot");
+      painter.drawLine(transformPoint(global->robot), transformPoint(global->target));
       painter.setBrush(Qt::NoBrush);
       painter.drawEllipse(transformPoint(global->robot), (int)global->robot_radius/2, (int)global->robot_radius/2);
       painter.setPen(Qt::white);
@@ -193,8 +209,14 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
       painter.setBrush(Qt::NoBrush);
       painter.drawEllipse(transformPoint(global->ball), (int)global->robot_radius/2, (int)global->robot_radius/2);
       for (size_t i = 0; i < global->enemies.size(); i++) {
+        painter.setPen(global->connected[i+1] ? Qt::blue : Qt::black);
+        painter.drawText(transformPoint(global->enemies[i] + Vec(-10, 20)), "Enemy " + QString::number(i+1));
         painter.setPen(Qt::red);
         painter.setBrush(Qt::red);
+        painter.drawLine(
+          transformPoint(global->enemies[i]),
+          transformPoint(global->enemies[i] +
+            (Vec(cos(global->direction[i+1]), -sin(global->direction[i+1])) * (global->robot_radius / 2))));
         if (isSelectEnemy && i == index_enemy_select) {
           painter.setPen(Qt::darkRed);
           painter.setBrush(Qt::darkRed);  
@@ -211,10 +233,12 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
         painter.setBrush(Qt::darkBlue);
         for (size_t i = 0; i < global->target_position.size(); i++) {
           for (size_t j = 0; j < global->target_position[i].size(); j++) {
-            painter.drawText(transformPoint(global->target_position[i][j] - Vec(4,4)), "x");
-            painter.setPen(QPen(Qt::darkBlue, 1, Qt::DashLine));
-            if (j == 0) painter.drawLine(transformPoint(global->enemies[i]), transformPoint(global->target_position[i][j]));
-            else painter.drawLine(transformPoint(global->target_position[i][j-1]), transformPoint(global->target_position[i][j]));
+            if (j == 0) painter.drawEllipse(transformPoint(global->target_position[i][j]), 2, 2);
+            else {
+              painter.drawText(transformPoint(global->target_position[i][j] - Vec(4,4)), "x");
+              painter.setPen(QPen(Qt::darkBlue, 1, Qt::DashLine));
+              painter.drawLine(transformPoint(global->target_position[i][j-1]), transformPoint(global->target_position[i][j]));
+            }
           } 
         }
       }
@@ -237,6 +261,9 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
       for (size_t i = 1; i < global->bezier_path.size(); i++) {
           painter.drawLine(transformPoint(global->bezier_path[i]), transformPoint(global->bezier_path[i-1]));
       }
+
+      painter.setPen(Qt::white);
+      painter.drawText(860, 15, "time: " + QString::number(global->timer / 1000) + "s");
       break;
     }
 
@@ -467,6 +494,7 @@ void RenderArea::mouseMoveEvent(QMouseEvent* event) {
           global->updateObstacles();
         } else if (isMouseInStart) {
           global->robot = transformPoint(event->pos() + mouseOffset);
+          global->target = global->robot;
         } else if (isMouseInTarget) {
           global->ball = transformPoint(event->pos() + mouseOffset);
         }

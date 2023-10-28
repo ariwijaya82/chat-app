@@ -87,7 +87,7 @@ void GlobalData::updateGlobal() {
 void GlobalData::updatePosition() {
   enemies.clear();
   
-  robot = convertPoint(position[path_number]["robot"]);
+  robot = target = convertPoint(position[path_number]["robot"]);
   ball = convertPoint(position[path_number]["ball"]);
   for (auto &enemy : position[path_number]["enemies"]) {
       enemies.push_back(convertPoint(enemy));
@@ -134,12 +134,15 @@ void GlobalData::updateObstacles() {
 void GlobalData::updateTargetPosition() {
   target_position.clear();
 
+  size_t index = 0;
   for (auto &data : position[path_number]["target"]) {
     vector<Vec> temp;
+    temp.push_back(enemies[index]);
     for (auto &position : data) {
       temp.push_back(convertPoint(position));
     }
     target_position.push_back(temp);
+    index++;
   }
 }
 
@@ -162,6 +165,7 @@ void GlobalData::saveValue() {
   for (auto &data : target_position) {
     json temp;
     for (auto &position : data) {
+      if (position == *data.begin()) continue; 
       temp.push_back(convertPoint(position));
     }
     target_position_json.push_back(temp);
@@ -213,4 +217,20 @@ void GlobalData::saveValue() {
       world_file_output << line << endl;
   }
   world_file_output.close();
+}
+
+void GlobalData::saveTargetPosition() {
+  json target_position_json;
+  for (auto &data : target_position) {
+    json temp;
+    for (auto &position : data) {
+      if (position == *data.begin()) continue; 
+      temp.push_back(convertPoint(position));
+    }
+    target_position_json.push_back(temp);
+  }
+  position[path_number]["target"] = target_position_json;
+  ofstream position_file(position_filename);
+  position_file << position;
+  position_file.close();
 }

@@ -69,21 +69,27 @@ void MainWindow::connectActions() {
 
   connect(fieldAct, &QAction::triggered, this, [&](bool checked) {
     fieldAct->setChecked(checked);
+    handleViewChanged(0, checked);
   });
   connect(nodeAct, &QAction::triggered, this, [&](bool checked) {
     nodeAct->setChecked(checked);
+    handleViewChanged(1, checked);
   });
   connect(visNodeAct, &QAction::triggered, this, [&](bool checked) {
     visNodeAct->setChecked(checked);
+    handleViewChanged(2, checked);
   });
   connect(robotAreaAct, &QAction::triggered, this, [&](bool checked) {
     robotAreaAct->setChecked(checked);
+    handleViewChanged(3, checked);
   });
   connect(astarPathAct, &QAction::triggered, this, [&](bool checked) {
     astarPathAct->setChecked(checked);
+    handleViewChanged(4, checked);
   });
   connect(bezierPathAct, &QAction::triggered, this, [&](bool checked) {
     bezierPathAct->setChecked(checked);
+    handleViewChanged(5, checked);
   });
 }
 
@@ -116,5 +122,5 @@ void MainWindow::handleModeChanged(int index) {
 }
 
 void MainWindow::handleViewChanged(int index, bool check) {
-  
+  // todo: implement view change
 }

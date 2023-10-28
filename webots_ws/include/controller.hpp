@@ -33,6 +33,7 @@ class Controller {
         double getDirInRadian();
         double getDirInDegree();
         Vec getPosition();
+        Vec getTarget();
 
         string getName() { return robot->getName(); }
         bool getIsFinished() { return isFinished; }
@@ -50,7 +51,7 @@ class Controller {
         int timeStep;
         bool isWalking = false,
              isManual = false,
-             isFinished = false;
+             isFinished = true;
 
         Vec target_point;
 

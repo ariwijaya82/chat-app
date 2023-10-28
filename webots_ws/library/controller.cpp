@@ -49,14 +49,15 @@ void Controller::process() {
   if (isManual) {
     int key = 0;
     while ((key = keyboard->getKey()) >= 0) {
-      cout << getName() << " key: " << key << endl;
       switch (key) {
         case ' ':
-          run(true);
-          break;
-        
-        case 83: // s 
-          run(false);
+          if (isWalking) {
+            run(false);
+            wait(200);
+          } else {
+            run(true);
+            wait(200);
+          }
           break;
         
         case webots::Keyboard::UP:
@@ -82,11 +83,11 @@ void Controller::process() {
   }
   
   if (!isFinished) {
-    Vec delta = getPosition() - target_point;
-    if (delta.len() < global->robot_radius) {
+    Vec delta = target_point - getPosition();
+    if (delta.len() < global->robot_radius/2) {
       isFinished = true;
     }
-    double target_dir = atan2(delta.y, delta.x) * 180.0 / M_PI;
+    double target_dir = atan2(-delta.y, delta.x) * 180.0 / M_PI;
     double delta_dir = target_dir - getDirInDegree();
 
     gaitManager->setXAmplitude(mappingValue(abs(delta_dir), 0, 60, 1.0, 0.0));
@@ -131,11 +132,18 @@ Vec Controller::getPosition() {
     return Vec((gps->getValues()[0] + 4.5) * 100, (gps->getValues()[1] + 3) * 100);
 }
 
+Vec Controller::getTarget() {
+  if (!isFinished) {
+    return target_point;
+  } else return getPosition();
+}
+
 void Controller::wait(int ms) {
     double start = robot->getTime();
     double s = (double)ms / 1000.0;
-    while(start + s < robot->getTime())
+    while(start + s > robot->getTime()) {
         robot->step(timeStep);
+    }
 }
 
 double Controller::mappingValue(double value, double min_input, double max_input, double min_output, double max_output) {

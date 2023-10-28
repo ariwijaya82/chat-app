@@ -11,26 +11,26 @@
 
 using namespace std;
 
-using json = nlohmann::json;
+using nlohmann::json;
 typedef websocketpp::server<websocketpp::config::asio> server;
-using connection_hdl = websocketpp::connection_hdl;
+using websocketpp::connection_hdl;
 using websocketpp::lib::placeholders::_1;
 using websocketpp::lib::placeholders::_2;
 
 // global variable
 server *ws_server = new server();
-int connection_number = 0;
 connection_hdl ws_conn;
+
+GlobalData *global = new GlobalData("../../../");
+Controller *controller = new Controller(global);
+
+bool isRunning = false;
 
 void on_open(server*, connection_hdl);
 void on_close(server*, connection_hdl);
 void on_message(server*, connection_hdl, server::message_ptr);
 
 int main(int argc, char** argv) {
-  GlobalData *global = new GlobalData("../../../");
-  Controller *controller = new Controller(global);
-
-  // generate websocket
   ws_server->set_open_handler(bind(on_open, ws_server, ::_1));
   ws_server->set_close_handler(bind(on_close, ws_server, ::_1));
   ws_server->init_asio();
@@ -43,33 +43,40 @@ int main(int argc, char** argv) {
       try {
         ws_server->listen(9000 + controller->getName().back() - '0');
         ws_server->start_accept();
-        cout << controller->getName() << " server running" << endl;
+        cout << "server running: " << controller->getName() << endl;
         ws_server->run();
         break;
       } catch (websocketpp::exception const &e) {
         cout << "failed init websocket and try again" << endl;
         cout << "websocket error: " << e.what() << endl;
-        this_thread::sleep_for(chrono::seconds(30));
+        this_thread::sleep_for(chrono::seconds(20));
       }
     }
   });
   thread main_thread([&]() {
-    // int id = controller->getName().back() - '0';
-    // controller->setManual(true);
-    // controller->setTarget(controller->getPosition() + Vec{100, 0});
     while (true) {
-      // if (connection_number == 1) {
-      //   try {
-      //     json data;
-      //     data["id"] = id;
-      //     data["type"] = "position";
-      //     data["value"]["x"] = controller->getPosition().x;
-      //     data["value"]["y"] = controller->getPosition().y;
-      //     ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
-      //   } catch(...) {
-      //     cout << "failed send data" << endl;
-      //   }
-      // }
+      if (isRunning) {
+        try {
+          json data;
+          data["type"] = "position";
+          data["value"]["x"] = controller->getPosition().x;
+          data["value"]["y"] = controller->getPosition().y;
+          data["value"]["dir"] = controller->getDirInRadian();
+          ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+        } catch(...) {
+          cout << "failed send data" << endl;
+        }
+
+        if (controller->getIsFinished()) {
+          cout << "finished" << endl;
+          json data;
+          data["type"] = "finished";
+          data["name"] = controller->getName();
+          data["target"]["x"] = controller->getTarget().x;
+          data["target"]["y"] = controller->getTarget().y;
+          ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+        }
+      }
       controller->process();
     }
 
@@ -81,16 +88,36 @@ int main(int argc, char** argv) {
 }
 
 void on_open(server* ws_server, connection_hdl hdl) {
-  cout << "connection open" << endl;
+  cout << "connection open: " << controller->getName() << endl;
   ws_conn = hdl;
-  connection_number = 1;
 }
 
 void on_close(server* ws_server, connection_hdl hdl) {
-  cout << "connection close" << endl;
-  connection_number = 0;
+  cout << "connection close: " << controller->getName() << endl;
 }
 
 void on_message(server* ws_server, connection_hdl hdl, server::message_ptr msg) {
   json data = json::parse(msg->get_payload());
+  string type = data["type"].template get<string>();
+  if (type == "run") {
+    string value = data["value"].template get<string>();
+    if (value == "start") {
+      isRunning = true;
+      controller->run(true);
+      Vec target = Vec(
+        data["target"]["x"].template get<double>(),
+        data["target"]["y"].template get<double>()
+      );
+      controller->setTarget(target);
+    } else if (value == "stop") {
+      isRunning = false;
+      controller->run(false);
+    }
+  } else if (type == "target") {
+    Vec target = Vec(
+      data["value"]["x"].template get<double>(),
+      data["value"]["y"].template get<double>()
+    );
+    controller->setTarget(target);
+  }
 }

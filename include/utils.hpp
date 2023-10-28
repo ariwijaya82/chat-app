@@ -40,6 +40,7 @@ class GlobalData {
     void updateTargetPosition();
     
     void saveValue();
+    void saveTargetPosition();
 
     string global_filename;
     string position_filename;
@@ -57,6 +58,7 @@ class GlobalData {
     
     Vec robot;
     Vec ball;
+    Vec target;
     vector<Vec> enemies;
     
     vector<vector<Vec>> obstacles;
@@ -76,6 +78,18 @@ class GlobalData {
     bool isStatic;
     bool isConnected;
     bool connected[6];
+    double direction[6];
+    size_t target_index[5];
+
+    bool showField = true;
+    bool showNode = true;
+    bool showVisNode = true;
+    bool showRobotArea = true;
+    bool showAstarPath = true;
+    bool showBezierPath = true;
+
+    int timer;
+    int interval;
 
   private:
     string dir;
