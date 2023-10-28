@@ -38,9 +38,12 @@ double PathGenerator::heuristic(Vec source, Vec target, int type) {
         return max(abs(target.x-source.x), abs(target.y-source.y)) +
             (sqrt(2)-1) * min(abs(target.x-source.x), abs(target.y-source.y));
         break;
-    default: // euclidean
+    case 4: // euclidean
         return sqrt(pow(target.x-source.x, 2) + pow(target.y-source.y, 2));
         break;
+    default:
+      cout << "false heuristic method" << endl;
+      return 0;
     }
 }
 

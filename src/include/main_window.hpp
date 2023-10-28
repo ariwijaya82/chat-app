@@ -20,7 +20,7 @@ class MainWindow : public QMainWindow {
     QAction *simulateAct;
     QAction *astarAct;
     QAction *bezierAct;
-    QAction *fieldAct;
+    
     QAction *nodeAct;
     QAction *visNodeAct;
     QAction *robotAreaAct;

@@ -175,19 +175,23 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
       painter.drawEllipse(QPoint(470, 320), 100, 100);
       painter.drawLine(470, 20, 470, 620);
 
-      painter.setPen(Qt::yellow);
-      painter.setBrush(Qt::yellow);
-      for (int x = global->node_distance; x < global->screen_width; x += global->node_distance) {
-        for (int y = global->node_distance; y < global->screen_height; y += global->node_distance) {
-          painter.drawEllipse(transformPoint(Vec(x, y)), 2, 2);
+      if (global->showNode) {
+        painter.setPen(Qt::yellow);
+        painter.setBrush(Qt::yellow);
+        for (int x = global->node_distance; x < global->screen_width; x += global->node_distance) {
+          for (int y = global->node_distance; y < global->screen_height; y += global->node_distance) {
+            painter.drawEllipse(transformPoint(Vec(x, y)), 2, 2);
+          }
         }
       }
 
-      painter.setPen(Qt::red);
-      painter.setBrush(Qt::red);
-      for (auto& data : global->obstacles) {
-        for (auto& point : data) {
-          painter.drawEllipse(transformPoint(point), 2, 2);
+      if (global->showRobotArea) {
+        painter.setPen(Qt::red);
+        painter.setBrush(Qt::red);
+        for (auto& data : global->obstacles) {
+          for (auto& point : data) {
+            painter.drawEllipse(transformPoint(point), 2, 2);
+          }
         }
       }
 
@@ -224,8 +228,10 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
         painter.drawEllipse(transformPoint(global->enemies[i]), 8, 8);
         painter.setBrush(Qt::NoBrush);
         painter.drawEllipse(transformPoint(global->enemies[i]), (int)global->robot_radius/2, (int)global->robot_radius/2);
-        painter.setPen(QPen(Qt::red, 1, Qt::DashLine));
-        painter.drawEllipse(transformPoint(global->enemies[i]), (int)global->robot_radius, (int)global->robot_radius);
+        if (global->showRobotArea) {
+          painter.setPen(QPen(Qt::red, 1, Qt::DashLine));
+          painter.drawEllipse(transformPoint(global->enemies[i]), (int)global->robot_radius, (int)global->robot_radius);
+        }
       }
 
       if (!global->isStatic) {
@@ -243,23 +249,29 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
         }
       }
 
-      painter.setPen(Qt::gray);
-      painter.setBrush(Qt::gray);
-      for (size_t i = 0; i < global->visited_node.size(); i++) {
-          painter.drawEllipse(transformPoint(global->visited_node[i]), 2, 2);
+      if (global->showVisNode) {
+        painter.setPen(Qt::gray);
+        painter.setBrush(Qt::gray);
+        for (size_t i = 0; i < global->visited_node.size(); i++) {
+            painter.drawEllipse(transformPoint(global->visited_node[i]), 2, 2);
+        }
       }
-      painter.setPen(Qt::blue);
-      painter.setBrush(Qt::blue);
-      for (size_t i = 0; i < global->astar_path.size(); i++) {
-          painter.drawEllipse(transformPoint(global->astar_path[i]), 2, 2);
-          if (i != 0) {
-              painter.drawLine(transformPoint(global->astar_path[i]), transformPoint(global->astar_path[i-1]));
-          }
+      if (global->showAstarPath) {
+        painter.setPen(Qt::blue);
+        painter.setBrush(Qt::blue);
+        for (size_t i = 0; i < global->astar_path.size(); i++) {
+            painter.drawEllipse(transformPoint(global->astar_path[i]), 2, 2);
+            if (i != 0) {
+                painter.drawLine(transformPoint(global->astar_path[i]), transformPoint(global->astar_path[i-1]));
+            }
+        }
       }
-      painter.setPen(Qt::magenta);
-      painter.setBrush(Qt::magenta);
-      for (size_t i = 1; i < global->bezier_path.size(); i++) {
-          painter.drawLine(transformPoint(global->bezier_path[i]), transformPoint(global->bezier_path[i-1]));
+      if (global->showBezierPath) {
+        painter.setPen(Qt::magenta);
+        painter.setBrush(Qt::magenta);
+        for (size_t i = 1; i < global->bezier_path.size(); i++) {
+            painter.drawLine(transformPoint(global->bezier_path[i]), transformPoint(global->bezier_path[i-1]));
+        }
       }
 
       painter.setPen(Qt::white);

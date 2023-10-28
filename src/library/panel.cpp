@@ -219,6 +219,31 @@ void Panel::setMode(int mode) {
 
 }
 
+void Panel::setView(int index, bool check) {
+  switch (index) {
+    case 0:
+      global->showNode = check;
+      break;
+    
+    case 1:
+      global->showVisNode = check;
+      break;
+    
+    case 2:
+      global->showRobotArea = check;
+      break;
+    
+    case 3:
+      global->showAstarPath = check;
+      break;
+    
+    case 4:
+      global->showBezierPath = check;
+      break;
+  }
+  renderArea->render();
+}
+
 void Panel::handleLeftButton() {
   switch (global->mode) {
     case 0: {

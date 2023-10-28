@@ -21,9 +21,6 @@ void MainWindow::createActions() {
   bezierAct = new QAction("Bezier", this);
   bezierAct->setCheckable(true);
 
-  fieldAct = new QAction("Field", this);
-  fieldAct->setCheckable(true);
-  fieldAct->setChecked(true);
   nodeAct = new QAction("Node", this);
   nodeAct->setCheckable(true);
   nodeAct->setChecked(true);
@@ -48,7 +45,6 @@ void MainWindow::createMenus() {
   modeMenu->addAction(bezierAct);
 
   viewMenu = menuBar()->addMenu("View");
-  viewMenu->addAction(fieldAct);
   viewMenu->addAction(nodeAct);
   viewMenu->addAction(visNodeAct);
   viewMenu->addAction(robotAreaAct);
@@ -67,29 +63,25 @@ void MainWindow::connectActions() {
     handleModeChanged(2);
   });
 
-  connect(fieldAct, &QAction::triggered, this, [&](bool checked) {
-    fieldAct->setChecked(checked);
-    handleViewChanged(0, checked);
-  });
   connect(nodeAct, &QAction::triggered, this, [&](bool checked) {
     nodeAct->setChecked(checked);
-    handleViewChanged(1, checked);
+    handleViewChanged(0, checked);
   });
   connect(visNodeAct, &QAction::triggered, this, [&](bool checked) {
     visNodeAct->setChecked(checked);
-    handleViewChanged(2, checked);
+    handleViewChanged(1, checked);
   });
   connect(robotAreaAct, &QAction::triggered, this, [&](bool checked) {
     robotAreaAct->setChecked(checked);
-    handleViewChanged(3, checked);
+    handleViewChanged(2, checked);
   });
   connect(astarPathAct, &QAction::triggered, this, [&](bool checked) {
     astarPathAct->setChecked(checked);
-    handleViewChanged(4, checked);
+    handleViewChanged(3, checked);
   });
   connect(bezierPathAct, &QAction::triggered, this, [&](bool checked) {
     bezierPathAct->setChecked(checked);
-    handleViewChanged(5, checked);
+    handleViewChanged(4, checked);
   });
 }
 
@@ -122,5 +114,5 @@ void MainWindow::handleModeChanged(int index) {
 }
 
 void MainWindow::handleViewChanged(int index, bool check) {
-  // todo: implement view change
+  panel->setView(index, check);
 }

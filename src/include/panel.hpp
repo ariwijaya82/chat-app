@@ -26,7 +26,8 @@ using nlohmann::json;
 class Panel : public QWidget {
   public:
     Panel(GlobalData* global);
-    void setMode(int); 
+    void setMode(int);
+    void setView(int, bool);
 
   private:
     RenderArea *renderArea;

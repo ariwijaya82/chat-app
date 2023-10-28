@@ -81,7 +81,6 @@ class GlobalData {
     double direction[6];
     size_t target_index[5];
 
-    bool showField = true;
     bool showNode = true;
     bool showVisNode = true;
     bool showRobotArea = true;
