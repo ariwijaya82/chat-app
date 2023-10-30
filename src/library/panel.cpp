@@ -80,7 +80,7 @@ Panel::Panel(GlobalData* global) : global(global) {
   pathCombo->setCurrentIndex(global->path_number);
   connect(pathCombo, &QComboBox::currentIndexChanged, this, [&](int value) { renderArea->handlePanelChange("pathCombo", value); });
 
-  heuristicCombo->addItems(QStringList{"Manhattan", "Diagonal", "Octile", "Euclidean"});
+  heuristicCombo->addItems(QStringList{"Manhattan", "Chebyshev", "Octile", "Euclidean"});
   heuristicCombo->setCurrentIndex(global->heuristic_type-1);
   connect(heuristicCombo, &QComboBox::currentIndexChanged, this, [&](int value) { renderArea->handlePanelChange("heuristicCombo", value); });
 
@@ -139,6 +139,7 @@ void Panel::setMode(int mode) {
       
       leftButton->setEnabled(true);
       startButton->setEnabled(false);
+      connectButton->setEnabled(true);
       heuristicCombo->setEnabled(true);
       nodeSpin->setEnabled(true);
       try {
@@ -240,6 +241,9 @@ void Panel::setView(int index, bool check) {
     case 4:
       global->showBezierPath = check;
       break;
+    case 5:
+      global->showFollowingPath = check;
+      break;
   }
   renderArea->render();
 }
@@ -260,7 +264,11 @@ void Panel::handleLeftButton() {
     }
     
     case 1: {
-      if (!global->isGenerate) leftButton->setEnabled(true);
+      if (global->ball == Vec(-50, -50)) {
+        QMessageBox::information(this, "Warning", "Please select start and target points");
+        break;
+      }
+
       if (renderArea->setPathNext(true)) {
         leftButton->setEnabled(false);
       }
@@ -371,6 +379,7 @@ void Panel::handleConnectButton() {
           connectButton->setText("Connect");
           startButton->setText("Start");
           startButton->setEnabled(false);
+          connectButton->setEnabled(true);
           staticCheck->setEnabled(true);
           pathCombo->setEnabled(true);
           heuristicCombo->setEnabled(true);
@@ -412,6 +421,7 @@ void Panel::handleStartButton() {
   if (global->isStart) {
     global->isStart = false;
     startButton->setText("Start");
+    connectButton->setEnabled(true);
     timer->stop();
 
     json data;
@@ -423,6 +433,7 @@ void Panel::handleStartButton() {
   } else {
     global->isStart = true;
     startButton->setText("Stop");
+    connectButton->setEnabled(false);
     timer->start(50);
     
     json data;
@@ -431,11 +442,11 @@ void Panel::handleStartButton() {
 
     robotSocket[0]->sendTextMessage(QString(to_string(data).c_str()));
     for (int i = 1; i < 6; i++) {
-      if (global->isStatic) data["value"] = "stop";
-      else if (global->target_index[i-1] != global->target_position[i-1].size()) {
+      if (!global->isStatic && global->target_index[i-1] < global->target_position[i-1].size()) {
         Vec point = global->target_position[i-1][global->target_index[i-1]];
         data["target"]["x"] = point.x;
         data["target"]["y"] = point.y;
+        data["value"] = "start";
       } else data["value"] = "stop";
       robotSocket[i]->sendTextMessage(QString(to_string(data).c_str()));
     }
@@ -478,6 +489,7 @@ void Panel::handleSocketMessage(int i, string message) {
         recv_data["value"]["x"].template get<double>(),
         recv_data["value"]["y"].template get<double>()
       );
+      global->following_path.push_back(global->robot);
       global->target = Vec(
         recv_data["value"]["target"]["x"].template get<double>(),
         recv_data["value"]["target"]["y"].template get<double>()
@@ -502,6 +514,7 @@ void Panel::handleSocketMessage(int i, string message) {
     } else if (type == "finished") {
       global->isStart = false;
       startButton->setEnabled(false);
+      connectButton->setEnabled(true);
     }
   } else { // enemy
     if (type == "position") {
@@ -511,7 +524,7 @@ void Panel::handleSocketMessage(int i, string message) {
       );
       global->direction[i] = recv_data["value"]["dir"].template get<double>();
     } else if (type == "finished") {
-      if (global->target_index[i-1] != global->target_position[i-1].size()) {
+      if (global->target_index[i-1] < global->target_position[i-1].size()) {
         Vec point = global->target_position[i-1][global->target_index[i-1]];
         int target_x = recv_data["target"]["x"].template get<int>();
         int target_y = recv_data["target"]["y"].template get<int>();

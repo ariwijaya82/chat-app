@@ -26,6 +26,7 @@ class MainWindow : public QMainWindow {
     QAction *robotAreaAct;
     QAction *astarPathAct;
     QAction *bezierPathAct;
+    QAction *followingPathAct;
 
     void createActions();
     void createMenus();

@@ -36,6 +36,9 @@ void MainWindow::createActions() {
   bezierPathAct = new QAction("Bezier Path", this);
   bezierPathAct->setCheckable(true);
   bezierPathAct->setChecked(true);
+  followingPathAct = new QAction("Following Path", this);
+  followingPathAct->setCheckable(true);
+  followingPathAct->setChecked(true);
 }
 
 void MainWindow::createMenus() {
@@ -50,6 +53,7 @@ void MainWindow::createMenus() {
   viewMenu->addAction(robotAreaAct);
   viewMenu->addAction(astarPathAct);
   viewMenu->addAction(bezierPathAct);
+  viewMenu->addAction(followingPathAct);
 }
 
 void MainWindow::connectActions() {
@@ -82,6 +86,10 @@ void MainWindow::connectActions() {
   connect(bezierPathAct, &QAction::triggered, this, [&](bool checked) {
     bezierPathAct->setChecked(checked);
     handleViewChanged(4, checked);
+  });
+  connect(followingPathAct, &QAction::triggered, this, [&](bool checked) {
+    followingPathAct->setChecked(checked);
+    handleViewChanged(5, checked);
   });
 }
 

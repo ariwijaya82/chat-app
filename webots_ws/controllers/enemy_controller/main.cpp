@@ -47,8 +47,7 @@ int main(int argc, char** argv) {
         ws_server->run();
         break;
       } catch (websocketpp::exception const &e) {
-        cout << "failed init websocket and try again" << endl;
-        cout << "websocket error: " << e.what() << endl;
+        cout << controller->getName() << " websocket error: " << e.what() << endl;
         this_thread::sleep_for(chrono::seconds(20));
       }
     }
@@ -68,7 +67,6 @@ int main(int argc, char** argv) {
         }
 
         if (controller->getIsFinished()) {
-          cout << "finished" << endl;
           json data;
           data["type"] = "finished";
           data["name"] = controller->getName();
@@ -100,6 +98,7 @@ void on_message(server* ws_server, connection_hdl hdl, server::message_ptr msg) 
   json data = json::parse(msg->get_payload());
   string type = data["type"].template get<string>();
   if (type == "run") {
+    cout << controller->getName() << " is running" << endl;
     string value = data["value"].template get<string>();
     if (value == "start") {
       isRunning = true;

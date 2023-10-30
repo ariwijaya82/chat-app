@@ -27,6 +27,7 @@ void RenderArea::setMode() {
       global->astar_path.clear();
       global->bezier_path.clear();
       global->visited_node.clear();
+      global->following_path.clear();
 
       global->updateGlobal();
       global->updatePosition();
@@ -42,13 +43,18 @@ void RenderArea::setMode() {
         global->connected[i] = false;
       }
       for (int i = 0; i < 5; i++) {
-        global->target_index[i] = 0;
+        global->target_index[i] = 1;
       }
       break;
     }
     
     case 1: {
+      index_enemy = 0;
+      index_enemy_select = 0;
       global->isGenerate = false;
+
+      global->robot = Vec(-50, -50);
+      global->ball = Vec(-50, -50);
 
       global->obstacles.clear();
       global->obstacles.push_back(vector<Vec>());
@@ -100,12 +106,9 @@ bool RenderArea::setPathNext(bool val) {
     if (generator->openList.empty()) return true;
     generator->astar_find_next_node();
     if (generator->current->coordinate == global->ball) return true;
-    generator->astar_find_neighbors();
+    generator->astar_find_neighbors(true);
   } else {
     global->isGenerate = false;
-
-    global->obstacles.clear();
-    global->obstacles.push_back(vector<Vec>());
     generator->openList.clear();
     generator->closeList.clear();
   }
@@ -114,7 +117,7 @@ bool RenderArea::setPathNext(bool val) {
 
 void RenderArea::setModifiedPath(bool val) {
   if (val) {
-    generator->modified_path(false);
+    generator->modified_path(true);
   } else {
     global->astar_path.clear();
     global->modified_astar_path.clear();
@@ -273,6 +276,13 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
             painter.drawLine(transformPoint(global->bezier_path[i]), transformPoint(global->bezier_path[i-1]));
         }
       }
+      if (global->showFollowingPath) {
+        painter.setPen(Qt::black);
+        painter.setBrush(Qt::black);
+        for (size_t i = 1; i < global->following_path.size(); i++) {
+            painter.drawLine(transformPoint(global->following_path[i]), transformPoint(global->following_path[i-1]));
+        }
+      }
 
       painter.setPen(Qt::white);
       painter.drawText(860, 15, "time: " + QString::number(global->timer / 1000) + "s");
@@ -317,6 +327,7 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
       for (auto &data : generator->openList) {
         painter.setPen(Qt::white);
         QPoint parent, child = transformPoint(data->coordinate);
+        painter.drawText(transformPoint(data->coordinate + Vec(-10, 20)), "(" + QString::number((int)data->G) + ", " + QString::number((int)data->H) + ")");
         if (data->parent != nullptr) {
           parent = transformPoint(data->parent->coordinate);
           painter.drawLine(parent, child);
@@ -325,6 +336,7 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
       for (auto &data : generator->closeList) {
         painter.setPen(Qt::black);
         QPoint parent, child = transformPoint(data->coordinate);
+        painter.drawText(transformPoint(data->coordinate + Vec(-10, 20)), "(" + QString::number((int)data->G) + ", " + QString::number((int)data->H) + ")");
         if (data->parent != nullptr) {
           parent = transformPoint(data->parent->coordinate);
           painter.drawLine(parent, child);
@@ -336,11 +348,13 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
     case 2: {
       painter.fillRect(rect(), Qt::green);
 
-      painter.setPen(Qt::yellow);
-      painter.setBrush(Qt::yellow);
-      for (int x = global->node_distance; x < global->screen_width; x += global->node_distance) {
-        for (int y = global->node_distance; y < global->screen_height; y += global->node_distance) {
-          painter.drawEllipse(transformPoint(Vec(x, y)), 4, 4);
+      if (!global->isGenerate) {
+        painter.setPen(Qt::yellow);
+        painter.setBrush(Qt::yellow);
+        for (int x = global->node_distance; x < global->screen_width; x += global->node_distance) {
+          for (int y = global->node_distance; y < global->screen_height; y += global->node_distance) {
+            painter.drawEllipse(transformPoint(Vec(x, y)), 4, 4);
+          }
         }
       }
 
@@ -397,48 +411,56 @@ void RenderArea::mousePressEvent(QMouseEvent* event) {
         index_j = -1;
 
         QPoint delta;
+        bool mouseFlag = false;
+        for (size_t i = 0; i < global->enemies.size(); i++) {
+          delta = transformPoint(global->enemies[i]) - event->pos();
+          if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
+            isMouseInEnemy = true;
+            index_enemy = i;
+            mouseOffset = delta;
+            mouseFlag = true;
+            break;
+          }
+        }
+        if (mouseFlag) break;
+
+        delta = transformPoint(global->robot) - event->pos();
+        if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
+          isMouseInStart = true;
+          mouseOffset = delta;
+          mouseFlag = true;
+          break;
+        }
+        if (mouseFlag) break;
+
+        delta = transformPoint(global->ball) - event->pos();
+        if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
+          isMouseInTarget = true;
+          mouseOffset = delta;
+          mouseFlag = true;
+          break;
+        }
+        if (mouseFlag) break;
+
         for (size_t i = 0; i < global->target_position.size(); i++) {
           for (size_t j = 0; j < global->target_position[i].size(); j++) {
             delta = transformPoint(global->target_position[i][j]) - event->pos();
+            bool found = false;
             if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
               isMouseInTarPos = true;
               index_i = i;
               index_j = j;
               mouseOffset = delta;
-            }
-          } 
-        }
-
-        if (global->mode == 0) {
-          for (size_t i = 0; i < global->enemies.size(); i++) {
-            delta = transformPoint(global->enemies[i]) - event->pos();
-            if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
-              isMouseInEnemy = true;
-              index_enemy = i;
-              mouseOffset = delta;
+              found = true;
               break;
             }
-          }
-
-          delta = transformPoint(global->robot) - event->pos();
-          if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
-            isMouseInStart = true;
-            mouseOffset = delta;
-            break;
-          }
-          delta = transformPoint(global->ball) - event->pos();
-          if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
-            isMouseInTarget = true;
-            mouseOffset = delta;
-            break;
-          }
+            if (found) break;
+          } 
         }
         break;
       }
     
       case 1: {
-        isMouseInStart = false;
-        isMouseInTarget = false;
         isMouseInNode = false;
 
         index_i = -1;
@@ -446,23 +468,21 @@ void RenderArea::mousePressEvent(QMouseEvent* event) {
 
         QPoint delta = transformPoint(global->robot) - event->pos();
         if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
-          isMouseInStart = true;
-          mouseOffset = delta;
+          global->robot = Vec(-50, -50);
+          index_enemy = 0;
           break;
         }
         delta = transformPoint(global->ball) - event->pos();
         if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
-          isMouseInTarget = true;
-          mouseOffset = delta;
+          global->ball = Vec(-50, -50);
+          index_enemy_select = 0;
           break;
         }
-
         for (int x = global->node_distance; x < global->screen_width; x += global->node_distance) {
           for (int y = global->node_distance; y < global->screen_height; y += global->node_distance) {
             delta = transformPoint(Vec(x, y)) - event->pos();
             if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
               isMouseInNode = true;
-              mouseOffset = delta;
               index_i = x;
               index_j = y;
               break;
@@ -503,7 +523,9 @@ void RenderArea::mouseMoveEvent(QMouseEvent* event) {
           global->target_position[index_i][index_j] = transformPoint(event->pos() + mouseOffset);
         } else if (isMouseInEnemy) {
           global->enemies[index_enemy] = transformPoint(event->pos() + mouseOffset);
+          global->target_position[index_enemy][0] = global->enemies[index_enemy];
           global->updateObstacles();
+          if (global->isGenerate) setGeneratePath(true);
         } else if (isMouseInStart) {
           global->robot = transformPoint(event->pos() + mouseOffset);
           global->target = global->robot;
@@ -532,39 +554,66 @@ void RenderArea::mouseReleaseEvent(QMouseEvent* event) {
   switch (global->mode) {
     case 0: {
       QPoint delta = mouseStart - mouseRelease;
-      if (isSelectEnemy) {
+      if (isMouseInEnemy && abs(delta.x()) < 10 && abs(delta.y()) < 10) {
         if (index_enemy_select == index_enemy) {
           isSelectEnemy = false;
           index_enemy_select = -1;
-        } else if (index_i == index_enemy_select && 
+        } else {
+          isSelectEnemy = true;
+          index_enemy_select = index_enemy;
+        }
+      } else if (isSelectEnemy) {
+        if (index_i == index_enemy_select && 
           index_j == global->target_position[index_i].size()-1) {
           global->target_position[index_i].pop_back();
         } else {
           global->target_position[index_enemy_select].push_back(transformPoint(mouseRelease));
         }
       }
-      else if (abs(delta.x()) < 10 && abs(delta.y()) < 10) {
-        if (isMouseInEnemy) {
-          isSelectEnemy = true;
-          index_enemy_select = index_enemy;
-        }
-      } 
       break;
     }
 
     case 1: {
-      if (!isMouseInStart && !isMouseInTarget && !isMouseInNode) {
+      if (!isMouseInNode) {
         for (int i = 0; i < global->screen_width; i += global->node_distance) {
           for (int j = 0; j < global->screen_width; j += global->node_distance) {
             QPoint temp = transformPoint(Vec(i, j));
             if (temp.x() > mouseStart.x() && temp.x() < mouseRelease.x() &&
             temp.y() > mouseStart.y() && temp.y() < mouseRelease.y()) {
-              global->obstacles[0].push_back(Vec(i, j));
+              Vec point(i, j);
+              if (point == global->robot || point == global->ball) continue;
+              bool found = false;
+              for (auto it = global->obstacles[0].begin(); it != global->obstacles[0].end(); it++) {
+                if (*it == Vec(i,j)) {
+                  global->obstacles[0].erase(it);
+                  found = true;
+                  break;
+                }
+              }
+              if (!found)
+                global->obstacles[0].push_back(Vec(i, j));
             }
           } 
         }
-      } else if (isMouseInNode) {
-        global->obstacles[0].push_back(Vec(index_i, index_j));
+      } else {
+        if (index_enemy == 0) {
+          global->robot = Vec(index_i, index_j);
+          index_enemy = 1;
+        } else if (index_enemy_select == 0) {
+          global->ball = Vec(index_i, index_j);
+          index_enemy_select = 1;
+        } else {
+          bool found = false;
+          for (auto it = global->obstacles[0].begin(); it != global->obstacles[0].end(); it++) {
+            if (*it == Vec(index_i, index_j)) {
+              global->obstacles[0].erase(it);
+              found = true;
+              break;
+            }
+          }
+          if (!found)
+            global->obstacles[0].push_back(Vec(index_i, index_j));
+        }
       }
       break;
     }

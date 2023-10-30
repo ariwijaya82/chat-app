@@ -86,6 +86,7 @@ class GlobalData {
     bool showRobotArea = true;
     bool showAstarPath = true;
     bool showBezierPath = true;
+    bool showFollowingPath = true;
 
     int timer;
     int interval;

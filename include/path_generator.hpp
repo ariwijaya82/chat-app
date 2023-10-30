@@ -32,9 +32,9 @@ class PathGenerator {
         double getBezierLength();
 
         bool astar_find_next_node();
-        void astar_find_neighbors();
+        void astar_find_neighbors(bool ignore_head=false);
         void process_path();
-        void modified_path(bool ignore_head=true);
+        void modified_path(bool ignore_head=false);
         void getBezierPoints(int, int);
 
         vector<Node*> openList, closeList;
@@ -45,7 +45,7 @@ class PathGenerator {
 
         double heuristic(Vec, Vec, int);
         bool detectCollision(Vec);
-        vector<Vec> getNeighbors(Vec);
+        vector<Vec> getNeighbors(Vec, bool ignore_head=false);
         Node* findNodeOnList(vector<Node*>&, Vec);
         void releaseNodes(vector<Node*>&);
 };

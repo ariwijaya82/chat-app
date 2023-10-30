@@ -50,8 +50,7 @@ int main(int argc, char** argv) {
         ws_server->run();
         break;
       } catch (websocketpp::exception const &e) {
-        cout << "failed init websocket and try again" << endl;
-        cout << "websocket error: " << e.what() << endl;
+        cout << controller->getName() << " websocket error: " << e.what() << endl;
         this_thread::sleep_for(chrono::seconds(20));
       }
     }
@@ -72,14 +71,16 @@ int main(int argc, char** argv) {
           cout << "failed send data" << endl;
         }
         global->robot = controller->getPosition();
-        if (controller->getIsFinished() || path_index == -1) {
-          path_index++;
-          if ((size_t)path_index == global->bezier_path.size()) {
-            isRunning = false;
-            controller->run(false);
-            json data;
-            data["type"] = "finished";
-            ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+        if (controller->getIsFinished()) {
+          while (path_index == -1 || (global->robot - global->bezier_path[path_index]).len() < global->robot_radius/2) {
+            path_index++;
+            if ((size_t)path_index == global->bezier_path.size()) {
+              isRunning = false;
+              controller->run(false);
+              json data;
+              data["type"] = "finished";
+              ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+            }
           }
         }
         controller->setTarget(global->bezier_path[path_index]);

@@ -31,12 +31,12 @@ double PathGenerator::heuristic(Vec source, Vec target, int type) {
     case 1: // manhatan
         return abs(target.x-source.x) + abs(target.y-source.y);
         break;
-    case 2: // diagonal
+    case 2: // chebyshev
         return max(abs(target.x-source.x), abs(target.y-source.y));
         break;
     case 3: // octile
-        return max(abs(target.x-source.x), abs(target.y-source.y)) +
-            (sqrt(2)-1) * min(abs(target.x-source.x), abs(target.y-source.y));
+        return abs(target.x-source.x) + abs(target.y-source.y) +
+            (sqrt(2)-2) * min(abs(target.x-source.x), abs(target.y-source.y));
         break;
     case 4: // euclidean
         return sqrt(pow(target.x-source.x, 2) + pow(target.y-source.y, 2));
@@ -62,7 +62,7 @@ bool PathGenerator::detectCollision(Vec pos) {
     return false;
 }
 
-vector<Vec> PathGenerator::getNeighbors(Vec pos) {
+vector<Vec> PathGenerator::getNeighbors(Vec pos, bool ignore_head) {
   vector<Vec> directions = {
       { 0, 1 }, { 1, 0 }, { 0, -1 }, { -1, 0 },
       { -1, -1 }, { 1, 1 }, { -1, 1 }, { 1, -1 }
@@ -70,6 +70,7 @@ vector<Vec> PathGenerator::getNeighbors(Vec pos) {
   for (auto &item : directions) {
       item = pos + item * global->node_distance;
   }
+  if (ignore_head) return directions;
   double temp_x = static_cast<int>(global->robot.x / global->node_distance) * global->node_distance;
   double temp_y = static_cast<int>(global->robot.y / global->node_distance) * global->node_distance;
   vector<Vec> start_area {
@@ -161,16 +162,16 @@ bool PathGenerator::astar_find_next_node() {
   return false;
 }
 
-void PathGenerator::astar_find_neighbors() {
-  for (auto &neighbor : getNeighbors(current->coordinate)) {
+void PathGenerator::astar_find_neighbors(bool ignore_head) {
+  for (auto &neighbor : getNeighbors(current->coordinate, ignore_head)) {
       if (detectCollision(neighbor) || findNodeOnList(closeList, neighbor)) continue;
-      int totalCost = current->G + heuristic(current->coordinate, neighbor, global->heuristic_type);
+      int totalCost = current->G + (current->coordinate - neighbor).len();
 
       Node* successor = findNodeOnList(openList, neighbor);
       if (successor == nullptr) {
           successor = new Node(neighbor, current);
           successor->G = totalCost;
-          successor->H = heuristic(successor->coordinate, global->ball, 4);
+          successor->H = heuristic(successor->coordinate, global->ball, global->heuristic_type);
           openList.push_back(successor);
           global->visited_node.push_back(neighbor);
       } else if (totalCost < successor->G) {
@@ -197,8 +198,8 @@ void PathGenerator::process_path() {
 }
 
 void PathGenerator::modified_path(bool ignore_head) {
-  if (ignore_head && global->astar_path.size() < 5) return;
-  if (!ignore_head && global->astar_path.size() < 3) return;
+  if (!ignore_head && global->astar_path.size() < 5) return;
+  if (ignore_head && global->astar_path.size() < 3) return;
 
   auto get_dir_func = [](Vec point1, Vec point2) {
     Vec delta = point1-point2;
@@ -216,7 +217,7 @@ void PathGenerator::modified_path(bool ignore_head) {
   vector<Vec> filter_path;
   filter_path.push_back(global->astar_path[0]);
   size_t start_index;
-  if (ignore_head) {
+  if (!ignore_head) {
     start_index = 2;
     filter_path.push_back(global->astar_path[1]);
   } else {
@@ -234,12 +235,12 @@ void PathGenerator::modified_path(bool ignore_head) {
     }
     i++;
   }
-  if (ignore_head) {
+  if (!ignore_head) {
     filter_path.push_back(global->astar_path[global->astar_path.size()-2]);
   }
   filter_path.push_back(global->astar_path[global->astar_path.size()-1]);
 
-  if (ignore_head) global->astar_path = filter_path;
+  if (!ignore_head) global->astar_path = filter_path;
   else global->modified_astar_path = filter_path;
 }
 
