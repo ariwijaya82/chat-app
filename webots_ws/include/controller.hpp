@@ -9,6 +9,7 @@
 #include <webots/PositionSensor.hpp>
 #include <webots/Robot.hpp>
 #include <webots/Gyro.hpp>
+#include <webots/Accelerometer.hpp>
 #include <webots/GPS.hpp>
 #include <webots/Compass.hpp>
 
@@ -21,32 +22,42 @@ using namespace std;
 
 class Controller {
     public:
-        Controller();
+        Controller(GlobalData*);
         ~Controller();
-        void run(bool start);
-        void setVel(double x, double a);
-
-        void robotStep();
-        void manualController();
+        
+        void process();
+        void run(bool);
+        void setTarget(Vec);
+        void setManual(bool);
 
         double getDirInRadian();
         double getDirInDegree();
         Vec getPosition();
-        
-        webots::Robot *robot;
+        Vec getTarget();
+
+        string getName() { return robot->getName(); }
+        bool getIsFinished() { return isFinished; }
 
     private:
-        int timeStep;
-        
-        webots::Gyro *gyro;
+        GlobalData* global;
+
+        webots::Robot *robot;
         webots::Keyboard *keyboard;
         webots::GPS *gps;
         webots::Compass *compass;
-        webots::PositionSensor *positionSensors[20];
         managers::RobotisOp2MotionManager *motionManager;
         managers::RobotisOp2GaitManager *gaitManager;
         
+        int timeStep;
+        bool isWalking = false,
+             isManual = false,
+             isFinished = true;
+
+        Vec target_point;
+
         void wait(int ms);
+        double mappingValue(double, double, double, double, double);
+        void checkIfFallen();
 };
 
 #endif

@@ -17,7 +17,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.05585737660688838 0.9910217510322628 0.1214736286588325 0.8689162674241423
-  position -8.560926749956002 -0.5234402834918117 7.627870262924557
+  position -11.397193297162246 -1.0320289968328693 12.837380150573116
   follow "myRobot"
 }
 TexturedBackground {
@@ -29,17 +29,14 @@ TexturedBackgroundLight {
   luminosity 0.5
 }
 DEF BALL Ball {
-  translation 3.17541 0.0172127 0.03
+  translation 3.08697 1.51891 0.03
   rotation 1 0 0 1.5707963267948966
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation -2.392 1.59875 0.236
+  translation -3.37757 -0.467304 0.236
   rotation 9.589809995798671e-09 -0.9999999995618964 2.9600799987031783e-05 -0.08999530717958582
   name "robot_test"
-  controller "<extern>"
-  window "<none>"
-  jersey RobotisJersey {
-  }
+  controller "robot_controller"
   bodySlot [
     Compass {
     }
@@ -49,49 +46,74 @@ DEF ROBOTISOP2 RobotisOp2 {
   ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation 0.538439 1.69714 0.236
+  translation -0.212277 0.696891 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_1"
   controller "enemy_controller"
   plasticColor 0 0 0
-  jersey RobotisJersey {
-  }
+  bodySlot [
+    Compass {
+    }
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation 1.82134 -1.98636 0.236
+  translation -1.96149 1.99754 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_2"
   controller "enemy_controller"
   plasticColor 0 0 0
-  jersey RobotisJersey {
-  }
+  bodySlot [
+    Compass {
+    }
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation -1.30013 1.47451 0.236
+  translation -1.87122 0.589186 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_3"
   controller "enemy_controller"
   plasticColor 0 0 0
-  jersey RobotisJersey {
-  }
+  bodySlot [
+    Compass {
+    }
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation 0.0780319 -0.916182 0.236
+  translation 1.71061 1.08752 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_4"
   controller "enemy_controller"
   plasticColor 0 0 0
-  jersey RobotisJersey {
-  }
+  bodySlot [
+    Compass {
+    }
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation -1.64196 0.329487 0.236
+  translation 1.72055 -0.170694 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_5"
   controller "enemy_controller"
   plasticColor 0 0 0
-  jersey RobotisJersey {
-  }
+  bodySlot [
+    Compass {
+    }
+    GPS {
+      rotation 0 0 1 -1.5707
+    }
+  ]
 }
 RobocupSoccerField {
   size "kid"

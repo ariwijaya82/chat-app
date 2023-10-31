@@ -1,4 +1,5 @@
 #include "controller.hpp"
+#include "path_generator.hpp"
 
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
@@ -23,8 +24,10 @@ connection_hdl ws_conn;
 
 GlobalData *global = new GlobalData("../../../");
 Controller *controller = new Controller(global);
+PathGenerator *generator = new PathGenerator(global);
 
 bool isRunning = false;
+int path_index = -1;
 
 void on_open(server*, connection_hdl);
 void on_close(server*, connection_hdl);
@@ -41,7 +44,7 @@ int main(int argc, char** argv) {
   thread server_thread([&]() {
     while (true) {
       try {
-        ws_server->listen(9000 + controller->getName().back() - '0');
+        ws_server->listen(9000);
         ws_server->start_accept();
         cout << "server running: " << controller->getName() << endl;
         ws_server->run();
@@ -61,23 +64,29 @@ int main(int argc, char** argv) {
           data["value"]["x"] = controller->getPosition().x;
           data["value"]["y"] = controller->getPosition().y;
           data["value"]["dir"] = controller->getDirInRadian();
+          data["value"]["target"]["x"] = controller->getTarget().x;
+          data["value"]["target"]["y"] = controller->getTarget().y;
           ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
         } catch(...) {
           cout << "failed send data" << endl;
         }
-
+        global->robot = controller->getPosition();
         if (controller->getIsFinished()) {
-          json data;
-          data["type"] = "finished";
-          data["name"] = controller->getName();
-          data["target"]["x"] = controller->getTarget().x;
-          data["target"]["y"] = controller->getTarget().y;
-          ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+          while (path_index == -1 || (global->robot - global->bezier_path[path_index]).len() < global->robot_radius/2) {
+            path_index++;
+            if ((size_t)path_index == global->bezier_path.size()) {
+              isRunning = false;
+              controller->run(false);
+              json data;
+              data["type"] = "finished";
+              ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+            }
+          }
         }
+        controller->setTarget(global->bezier_path[path_index]);
       }
       controller->process();
     }
-
   });
   server_thread.join();
   main_thread.join();
@@ -98,25 +107,74 @@ void on_message(server* ws_server, connection_hdl hdl, server::message_ptr msg) 
   json data = json::parse(msg->get_payload());
   string type = data["type"].template get<string>();
   if (type == "run") {
-    cout << controller->getName() << " is running" << endl;
     string value = data["value"].template get<string>();
     if (value == "start") {
       isRunning = true;
+      path_index = 0;
       controller->run(true);
-      Vec target = Vec(
-        data["target"]["x"].template get<double>(),
-        data["target"]["y"].template get<double>()
-      );
-      controller->setTarget(target);
-    } else if (value == "stop") {
+      generator->generatePath();
+      generator->generateSmoothPath(generator->getAstarLength()/10);
+
+      json data;
+      data["type"] = "astar_path";
+      data["value"] = json::array();
+      for (auto &item : global->astar_path) {
+        json point;
+        point["x"] = item.x;
+        point["y"] = item.y;
+        data["value"].push_back(point);
+      }
+      ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+
+      data["type"] = "bezier_path";
+      data["value"] = json::array();
+      for (auto &item : global->bezier_path) {
+        json point;
+        point["x"] = item.x;
+        point["y"] = item.y;
+        data["value"].push_back(point);
+      }
+      ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+    } 
+    else if (value == "stop") {
       isRunning = false;
       controller->run(false);
     }
-  } else if (type == "target") {
-    Vec target = Vec(
-      data["value"]["x"].template get<double>(),
-      data["value"]["y"].template get<double>()
-    );
-    controller->setTarget(target);
+  } else if (type == "update") {
+    path_index = 0;
+    global->obstacles.clear();
+    for (auto &obstacles : data["value"]) {
+      vector<Vec> temp;
+      for (auto &obstacle : obstacles) {
+        temp.push_back(Vec(
+          obstacle["x"].template get<double>(),
+          obstacle["y"].template get<double>()
+        ));
+      }
+      global->obstacles.push_back(temp);
+    }
+    generator->generatePath();
+    generator->generateSmoothPath(generator->getAstarLength()/10);
+
+    json data;
+    data["type"] = "astar_path";
+    data["value"] = json::array();
+    for (auto &item : global->astar_path) {
+      json point;
+      point["x"] = item.x;
+      point["y"] = item.y;
+      data["value"].push_back(point);
+    }
+    ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
+
+    data["type"] = "bezier_path";
+    data["value"] = json::array();
+    for (auto &item : global->bezier_path) {
+      json point;
+      point["x"] = item.x;
+      point["y"] = item.y;
+      data["value"].push_back(point);
+    }
+    ws_server->send(ws_conn, to_string(data), websocketpp::frame::opcode::text);
   }
 }
