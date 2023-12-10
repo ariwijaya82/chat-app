@@ -515,6 +515,7 @@ void Panel::handleSocketMessage(int i, string message) {
       global->isStart = false;
       startButton->setEnabled(false);
       connectButton->setEnabled(true);
+      // global->actual_path.push_back(global->robot);
     }
   } else { // enemy
     if (type == "position") {
