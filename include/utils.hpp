@@ -71,6 +71,7 @@ class GlobalData {
     vector<Vec> bezier_path;
     vector<Vec> following_path;
     vector<Vec> modified_astar_path;
+    vector<Vec> actual_path;
 
     int mode;
     bool isGenerate;

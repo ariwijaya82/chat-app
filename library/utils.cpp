@@ -184,11 +184,15 @@ void GlobalData::saveValue() {
   ifstream world_file_input(worlds_filename);
   vector<string> lines;
   string line;
+  vector<int> update_line;
+  int count_line = 0;
   while (getline(world_file_input, line)) {
+      count_line++;
+      if (line == "DEF ROBOTISOP2 RobotisOp2 {" || line == "DEF BALL Ball {")
+        update_line.push_back(count_line);
       lines.push_back(line);
   }
   world_file_input.close();
-  vector<int> update_line{31, 35, 48, 62, 76, 90, 104};
   auto update_string_position = [&](string pos_str, Vec pos) {
       stringstream ss(pos_str);
       vector<string> nums;
