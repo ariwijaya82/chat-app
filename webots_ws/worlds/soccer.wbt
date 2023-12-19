@@ -28,11 +28,11 @@ TexturedBackgroundLight {
   luminosity 0.5
 }
 DEF BALL Ball {
-  translation 3.08697 1.51891 0.03
+  translation 3.25703 -0.572879 0.03
   rotation 1 0 0 1.5707963267948966
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation -3.37757 -0.467304 0.236
+  translation -2.29142 0.049642 0.236
   rotation 9.589809995798671e-09 -0.9999999995618964 2.9600799987031783e-05 -0.08999530717958582
   name "robot_test"
   controller "robot_controller"
@@ -45,7 +45,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation -0.212277 0.696891 0.236
+  translation -0.163579 0.0598898 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_1"
   controller "enemy_controller"
@@ -59,7 +59,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation -1.96149 1.99754 0.236
+  translation 1.14348 -1.10377 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_2"
   controller "enemy_controller"
@@ -73,7 +73,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation -1.87122 0.589186 0.236
+  translation -1.02175 1.52446 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_3"
   controller "enemy_controller"
@@ -87,7 +87,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation 1.71061 1.08752 0.236
+  translation -1.96 -1.55 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_4"
   controller "enemy_controller"
@@ -101,7 +101,7 @@ DEF ROBOTISOP2 RobotisOp2 {
   ]
 }
 DEF ROBOTISOP2 RobotisOp2 {
-  translation 1.72055 -0.170694 0.236
+  translation 1.19806 1.49666 0.236
   rotation 0.044984785236557315 2.1569792921064317e-10 0.9989876721447672 3.14159
   name "enemy_5"
   controller "enemy_controller"

@@ -1,5 +1,5 @@
 #include "utils.hpp"
-
+// Vec implementation
 Vec::Vec(double x, double y) {
     this->x = x;
     this->y = y;
@@ -32,7 +32,7 @@ bool Vec::operator==(Vec vec) {
 ostream& operator<<(ostream &os, Vec vec) {
     return os << "{" << vec.x << "," << vec.y << "}";
 }
-
+// utils private function
 Vec convertPoint(json point) {
   double x = point["x"].template get<double>();
   double y = point["y"].template get<double>();
@@ -46,6 +46,14 @@ json convertPoint(Vec point) {
   return data;
 }
 
+bool pointInField(Vec point, double width, double height) {
+  if (
+      point.x >= 0 && point.x <= width &&
+      point.y >= 0 && point.y <= height
+  ) return true;
+  return false;
+}
+// GlobalData implementation
 GlobalData::GlobalData(string dir_) {
   dir = dir_;
   global_filename = dir + "config/global.json";
@@ -65,10 +73,8 @@ GlobalData::GlobalData(string dir_) {
 void GlobalData::loadFile() {
     ifstream global_file(global_filename);
     ifstream position_file(position_filename);
-
     global = json::parse(global_file);
     position = json::parse(position_file);
-
     global_file.close();
     position_file.close();
 }
@@ -86,7 +92,6 @@ void GlobalData::updateGlobal() {
 
 void GlobalData::updatePosition() {
   enemies.clear();
-  
   robot = target = convertPoint(position[path_number]["robot"]);
   ball = convertPoint(position[path_number]["ball"]);
   for (auto &enemy : position[path_number]["enemies"]) {
@@ -97,15 +102,6 @@ void GlobalData::updatePosition() {
 void GlobalData::updateObstacles() {
   obstacles.clear();
   obstacles_visible.clear();
-
-  auto point_in_field = [&](Vec point) {
-      if (
-          point.x >= 0 && point.x <= screen_width &&
-          point.y >= 0 && point.y <= screen_height
-      ) return true;
-      return false;
-  };
-
   for (auto &enemy : enemies) {
       vector<Vec> obstacle_of_enemy, obstacle_of_enemy_visible;
       Vec temp_point{
@@ -118,7 +114,7 @@ void GlobalData::updateObstacles() {
           for (int j = -offset; j <= offset; j++) {
               Vec neighbor = temp_point + Vec{i * node_distance, j * node_distance};
               Vec delta = enemy - neighbor;
-              if (point_in_field(neighbor)) {
+              if (pointInField(neighbor, screen_width, screen_height)) {
                 if (delta.len() <= robot_radius)
                   obstacle_of_enemy.push_back(neighbor);
                 if (delta.len() <= robot_radius/2)
@@ -133,7 +129,6 @@ void GlobalData::updateObstacles() {
 
 void GlobalData::updateTargetPosition() {
   target_position.clear();
-
   size_t index = 0;
   for (auto &data : position[path_number]["target"]) {
     vector<Vec> temp;
@@ -152,7 +147,6 @@ void GlobalData::saveValue() {
   global["robot_radius"] = robot_radius;
   global["node_distance"] = node_distance;
   global["bezier_curvature"] = bezier_curvature;
-  
   position[path_number]["robot"] = convertPoint(robot);
   position[path_number]["ball"] = convertPoint(ball);
   json enemies_data;

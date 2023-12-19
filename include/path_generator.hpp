@@ -30,6 +30,7 @@ class PathGenerator {
 
         double getAstarLength();
         double getBezierLength();
+        int getTotalVisitedNode();
 
         bool astar_find_next_node();
         void astar_find_neighbors(bool ignore_head=false);

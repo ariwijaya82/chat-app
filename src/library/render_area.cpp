@@ -21,11 +21,11 @@ void RenderArea::setMode() {
     case 0: {
       global->isGenerate = false;
       global->isStart = false;
-      global->isStatic = false;
       global->isConnected = false;
 
       global->astar_path.clear();
       global->bezier_path.clear();
+      global->normal_bezier_path.clear();
       global->visited_node.clear();
       global->following_path.clear();
 
@@ -68,6 +68,7 @@ void RenderArea::setMode() {
 
       global->astar_path.clear();
       global->bezier_path.clear();
+        global->normal_bezier_path.clear();
       global->control_points.clear();
       global->modified_astar_path.clear();
       break;
@@ -83,6 +84,7 @@ void RenderArea::setGeneratePath(bool value) {
   } else {
     global->astar_path.clear();
     global->bezier_path.clear();
+    global->normal_bezier_path.clear();
     global->visited_node.clear();
   }
 }
@@ -122,6 +124,7 @@ void RenderArea::setModifiedPath(bool val) {
     global->astar_path.clear();
     global->modified_astar_path.clear();
     global->bezier_path.clear();
+    global->normal_bezier_path.clear();
     global->control_points.clear();
   }
 }
@@ -149,6 +152,8 @@ void RenderArea::handlePanelChange(string widget, int value) {
     if (global->mode == 0) {
       global->updateObstacles();
       if (global->isGenerate) setGeneratePath(true);
+    } else if (global->mode == 1) {
+      setMode();
     }
   } else if (widget == "radiusSpin") {
     global->robot_radius = value * 2;
@@ -206,18 +211,19 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
         transformPoint(global->robot +
           (Vec(cos(global->direction[0]), -sin(global->direction[0])) * (global->robot_radius / 2))));
       painter.setPen(global->connected[0] ? Qt::blue : Qt::black);
-      painter.drawText(transformPoint(global->robot + Vec(-10, 20)), "Robot");
+      painter.drawText(transformPoint(global->robot + Vec(-25, 25)), "Robot 1");
+      // painter.drawText(transformPoint(global->robot + Vec(-25, 15)), "(" + QString::number(global->robot.x) + ", " + QString::number(global->robot.y) + ")");
       painter.drawLine(transformPoint(global->robot), transformPoint(global->target));
       painter.setBrush(Qt::NoBrush);
       painter.drawEllipse(transformPoint(global->robot), (int)global->robot_radius/2, (int)global->robot_radius/2);
       painter.setPen(Qt::white);
       painter.setBrush(Qt::white);
       painter.drawEllipse(transformPoint(global->ball), 8, 8);
-      painter.setBrush(Qt::NoBrush);
-      painter.drawEllipse(transformPoint(global->ball), (int)global->robot_radius/2, (int)global->robot_radius/2);
+      // painter.drawText(transformPoint(global->ball + Vec(-25, 15)), "(" + QString::number(global->ball.x) + ", " + QString::number(global->ball.y) + ")");
       for (size_t i = 0; i < global->enemies.size(); i++) {
         painter.setPen(global->connected[i+1] ? Qt::blue : Qt::black);
-        painter.drawText(transformPoint(global->enemies[i] + Vec(-10, 20)), "Enemy " + QString::number(i+1));
+        painter.drawText(transformPoint(global->enemies[i] + Vec(-25, 25)), "Robot " + QString::number(i+2));
+        // painter.drawText(transformPoint(global->enemies[i] + Vec(-25, 15)), "(" + QString::number(global->enemies[i].x) + ", " + QString::number(global->enemies[i].y) + ")");
         painter.setPen(Qt::red);
         painter.setBrush(Qt::red);
         painter.drawLine(
@@ -245,6 +251,7 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
             if (j == 0) painter.drawEllipse(transformPoint(global->target_position[i][j]), 2, 2);
             else {
               painter.drawText(transformPoint(global->target_position[i][j] - Vec(4,4)), "x");
+              painter.drawText(transformPoint(global->target_position[i][j] + Vec(-25, 15)), "(" + QString::number(global->target_position[i][j].x) + ", " + QString::number(global->target_position[i][j].y) + ")");
               painter.setPen(QPen(Qt::darkBlue, 1, Qt::DashLine));
               painter.drawLine(transformPoint(global->target_position[i][j-1]), transformPoint(global->target_position[i][j]));
             }
@@ -270,11 +277,16 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
         }
       }
       if (global->showBezierPath) {
-        painter.setPen(Qt::magenta);
+        painter.setPen(QPen(Qt::magenta, 3));
         painter.setBrush(Qt::magenta);
         for (size_t i = 1; i < global->bezier_path.size(); i++) {
             painter.drawLine(transformPoint(global->bezier_path[i]), transformPoint(global->bezier_path[i-1]));
         }
+        // painter.setPen(Qt::cyan);
+        // painter.setBrush(Qt::cyan);
+        // for (size_t i = 1; i < global->normal_bezier_path.size(); i++) {
+        //     painter.drawLine(transformPoint(global->normal_bezier_path[i]), transformPoint(global->normal_bezier_path[i-1]));
+        // }
       }
       if (global->showFollowingPath) {
         painter.setPen(Qt::black);
@@ -286,6 +298,11 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
 
       painter.setPen(Qt::white);
       painter.drawText(860, 15, "time: " + QString::number(global->timer / 1000) + "s");
+      if (global->isGenerate) {
+        painter.drawText(800, 580, "visited node: " + QString::number(generator->getTotalVisitedNode()));
+        painter.drawText(800, 600, "astar len: " + QString::number(generator->getAstarLength()));
+        painter.drawText(800, 620, "bezier len: " + QString::number(generator->getBezierLength()));
+      }
       break;
     }
 
@@ -324,6 +341,9 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
         QPoint delta = mouseCurr - mouseStart;
         painter.drawRect(mouseStart.x(), mouseStart.y(), delta.x(), delta.y());
       }
+      QFont font;
+      font.setPixelSize(30);
+      painter.setFont(font);
       for (auto &data : generator->openList) {
         painter.setPen(Qt::white);
         QPoint parent, child = transformPoint(data->coordinate);
@@ -490,7 +510,7 @@ void RenderArea::mousePressEvent(QMouseEvent* event) {
           }
         }
       }
-    
+
       case 2: {
         isMouseInNode = false;
         index_i = -1;

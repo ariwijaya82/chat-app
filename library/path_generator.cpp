@@ -26,6 +26,10 @@ double PathGenerator::getBezierLength() {
   return distance;
 }
 
+int PathGenerator::getTotalVisitedNode() {
+  return openList.size() + closeList.size();
+}
+
 double PathGenerator::heuristic(Vec source, Vec target, int type) {
     switch (type) {
     case 1: // manhatan
@@ -117,6 +121,9 @@ void PathGenerator::generatePath() {
   current = nullptr;
   global->visited_node.clear();
   
+  releaseNodes(openList);
+  releaseNodes(closeList);
+
   openList.clear();
   closeList.clear();
 
@@ -191,10 +198,9 @@ void PathGenerator::process_path() {
   path.push_back(global->robot);
   reverse(path.begin(), path.end());
 
-  releaseNodes(openList);
-  releaseNodes(closeList);
-
   global->astar_path = path;
+  // temp
+  global->normal_astar_path = path;
 }
 
 void PathGenerator::modified_path(bool ignore_head) {
@@ -246,6 +252,7 @@ void PathGenerator::modified_path(bool ignore_head) {
 
 void PathGenerator::generateSmoothPath(int numPoints) {
     vector<Vec> result(numPoints+1);
+    vector<Vec> temp_result(numPoints+1);
     for (int i = 0; i <= numPoints; ++i) {
         double t = static_cast<double>(i) / numPoints;
         vector<Vec> points;
@@ -260,8 +267,21 @@ void PathGenerator::generateSmoothPath(int numPoints) {
             }
         }
         result[i] = points[0];
+        points.clear();
+        for (Vec point : global->normal_astar_path) {
+            points.push_back(point);
+        }
+        n = points.size();
+
+        for (int j = 1; j < n; ++j) {
+            for (int k = 0; k < n - j; ++k) {
+                points[k] = points[k]*(1 - t) + points[k + 1]*t;
+            }
+        }
+        temp_result[i] = points[0];
     }
     global->bezier_path = result;
+    global->normal_bezier_path = temp_result;
 }
 
 void PathGenerator::getBezierPoints(int numPoints, int index) {

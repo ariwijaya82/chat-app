@@ -93,7 +93,7 @@ void Controller::process() {
     else if (delta_dir < -180.0) delta_dir += 360.0;
 
     gaitManager->setXAmplitude(mappingValue(abs(delta_dir), 0, 60, 1.0, 0.0));
-    gaitManager->setAAmplitude(mappingValue(delta_dir, -60, 60, 1.0, -1.0));
+    gaitManager->setAAmplitude(mappingValue(delta_dir, -90, 90, 1.0, -1.0));
   }
 
   gaitManager->step(timeStep);

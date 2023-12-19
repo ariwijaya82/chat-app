@@ -98,7 +98,6 @@ void on_message(server* ws_server, connection_hdl hdl, server::message_ptr msg) 
   json data = json::parse(msg->get_payload());
   string type = data["type"].template get<string>();
   if (type == "run") {
-    cout << controller->getName() << " is running" << endl;
     string value = data["value"].template get<string>();
     if (value == "start") {
       isRunning = true;

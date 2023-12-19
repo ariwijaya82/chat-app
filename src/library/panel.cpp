@@ -63,6 +63,7 @@ Panel::Panel(GlobalData* global) : global(global) {
   mainLayout->addLayout(panelLayout);
   setLayout(mainLayout);
 
+  global->isStatic = true;
   setMode(0);
 
   connect(leftButton, &QPushButton::clicked, this, &Panel::handleLeftButton);
@@ -85,7 +86,7 @@ Panel::Panel(GlobalData* global) : global(global) {
   connect(heuristicCombo, &QComboBox::currentIndexChanged, this, [&](int value) { renderArea->handlePanelChange("heuristicCombo", value); });
 
   nodeSpin->setMinimum(10);
-  nodeSpin->setMaximum(100);
+  nodeSpin->setMaximum(200);
   nodeSpin->setValue(global->node_distance);
   connect(nodeSpin, &QSpinBox::valueChanged, this, [&](int value) { renderArea->handlePanelChange("nodeSpin", value); });
 
@@ -341,7 +342,6 @@ void Panel::handleConnectButton() {
   } else {
     try {
       connect(robotSocket[0], &QWebSocket::connected, this, [&](){
-        bool isStatic = global->isStatic;
         renderArea->setMode();
 
         pathCombo->setCurrentIndex(global->path_number);
@@ -362,7 +362,6 @@ void Panel::handleConnectButton() {
         bezierSpin->setEnabled(false);
 
         global->isConnected = true;
-        global->isStatic = isStatic;
         global->connected[0] = true;
         renderArea->render();
       });
@@ -455,10 +454,10 @@ void Panel::handleStartButton() {
 
 void Panel::handleTimer() {
   renderArea->render();
-  if (global->isStart && !global->isStatic) {
+  if (global->isStart) {
     global->timer += timer->interval();
     global->interval += timer->interval();
-    if (global->interval >= 3000) {
+    if (!global->isStatic && global->interval >= 3000) {
       global->interval = 0;
       global->updateObstacles();
 
@@ -505,6 +504,7 @@ void Panel::handleSocketMessage(int i, string message) {
       }
     } else if (type == "bezier_path") {
       global->bezier_path.clear();
+      global->normal_bezier_path.clear();
       for (auto &item : recv_data["value"]) {
         global->bezier_path.push_back(Vec(
           item["x"].template get<double>(),
