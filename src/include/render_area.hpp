@@ -4,6 +4,7 @@
 #include <QtWidgets/QWidget>
 #include <QtGui/QPainter>
 #include <QtGui/QPaintEvent>
+#include <QtGui/QColor>
 #include <QtCore/QTimer>
 
 #include "utils.hpp"

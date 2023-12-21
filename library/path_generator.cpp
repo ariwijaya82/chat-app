@@ -77,6 +77,7 @@ vector<Vec> PathGenerator::getNeighbors(Vec pos, bool ignore_head) {
   if (ignore_head) return directions;
   double temp_x = static_cast<int>(global->robot.x / global->node_distance) * global->node_distance;
   double temp_y = static_cast<int>(global->robot.y / global->node_distance) * global->node_distance;
+  if (global->robot == Vec(temp_x, temp_y)) return directions;
   vector<Vec> start_area {
       Vec{temp_x, temp_y},
       Vec{temp_x+global->node_distance, temp_y},

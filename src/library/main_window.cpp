@@ -39,6 +39,9 @@ void MainWindow::createActions() {
   followingPathAct = new QAction("Following Path", this);
   followingPathAct->setCheckable(true);
   followingPathAct->setChecked(true);
+  robotAct = new QAction("Robot", this);
+  robotAct->setCheckable(true);
+  robotAct->setChecked(true);
 }
 
 void MainWindow::createMenus() {
@@ -54,6 +57,7 @@ void MainWindow::createMenus() {
   viewMenu->addAction(astarPathAct);
   viewMenu->addAction(bezierPathAct);
   viewMenu->addAction(followingPathAct);
+  viewMenu->addAction(robotAct);
 }
 
 void MainWindow::connectActions() {
@@ -90,6 +94,10 @@ void MainWindow::connectActions() {
   connect(followingPathAct, &QAction::triggered, this, [&](bool checked) {
     followingPathAct->setChecked(checked);
     handleViewChanged(5, checked);
+  });
+  connect(robotAct, &QAction::triggered, this, [&](bool checked) {
+    robotAct->setChecked(checked);
+    handleViewChanged(6, checked);
   });
 }
 

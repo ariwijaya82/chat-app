@@ -1,3 +1,4 @@
 .vscode
 build/
 **/enemy_controller/enemy_controller
+**/robot_controller/robot_controller

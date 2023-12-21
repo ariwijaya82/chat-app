@@ -173,8 +173,8 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
   QPainter painter(this);
   switch (global->mode) {
     case 0: {
-      painter.fillRect(rect(), Qt::green);
-      painter.setPen(Qt::white);
+      painter.fillRect(rect(), QColor(89,192,52));
+      painter.setPen(QPen(Qt::white, 3));
       painter.drawRect(20, 20, 900, 600);
       painter.drawRect(20, 70, 200, 500);
       painter.drawRect(20, 170, 100, 300);
@@ -193,53 +193,55 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
         }
       }
 
-      if (global->showRobotArea) {
-        painter.setPen(Qt::red);
-        painter.setBrush(Qt::red);
-        for (auto& data : global->obstacles) {
-          for (auto& point : data) {
-            painter.drawEllipse(transformPoint(point), 2, 2);
+      if (global->showRobot) {
+        if (global->showRobotArea) {
+          painter.setPen(Qt::red);
+          painter.setBrush(Qt::red);
+          for (auto& data : global->obstacles) {
+            for (auto& point : data) {
+              painter.drawEllipse(transformPoint(point), 2, 2);
+            }
           }
         }
-      }
-
-      painter.setPen(Qt::black);
-      painter.setBrush(Qt::black);
-      painter.drawEllipse(transformPoint(global->robot), 8, 8);
-      painter.drawLine(
-        transformPoint(global->robot),
-        transformPoint(global->robot +
-          (Vec(cos(global->direction[0]), -sin(global->direction[0])) * (global->robot_radius / 2))));
-      painter.setPen(global->connected[0] ? Qt::blue : Qt::black);
-      painter.drawText(transformPoint(global->robot + Vec(-25, 25)), "Robot 1");
-      // painter.drawText(transformPoint(global->robot + Vec(-25, 15)), "(" + QString::number(global->robot.x) + ", " + QString::number(global->robot.y) + ")");
-      painter.drawLine(transformPoint(global->robot), transformPoint(global->target));
-      painter.setBrush(Qt::NoBrush);
-      painter.drawEllipse(transformPoint(global->robot), (int)global->robot_radius/2, (int)global->robot_radius/2);
-      painter.setPen(Qt::white);
-      painter.setBrush(Qt::white);
-      painter.drawEllipse(transformPoint(global->ball), 8, 8);
-      // painter.drawText(transformPoint(global->ball + Vec(-25, 15)), "(" + QString::number(global->ball.x) + ", " + QString::number(global->ball.y) + ")");
-      for (size_t i = 0; i < global->enemies.size(); i++) {
-        painter.setPen(global->connected[i+1] ? Qt::blue : Qt::black);
-        painter.drawText(transformPoint(global->enemies[i] + Vec(-25, 25)), "Robot " + QString::number(i+2));
-        // painter.drawText(transformPoint(global->enemies[i] + Vec(-25, 15)), "(" + QString::number(global->enemies[i].x) + ", " + QString::number(global->enemies[i].y) + ")");
-        painter.setPen(Qt::red);
-        painter.setBrush(Qt::red);
-        painter.drawLine(
-          transformPoint(global->enemies[i]),
-          transformPoint(global->enemies[i] +
-            (Vec(cos(global->direction[i+1]), -sin(global->direction[i+1])) * (global->robot_radius / 2))));
-        if (isSelectEnemy && i == index_enemy_select) {
-          painter.setPen(Qt::darkRed);
-          painter.setBrush(Qt::darkRed);  
-        }
-        painter.drawEllipse(transformPoint(global->enemies[i]), 8, 8);
+        painter.setPen(Qt::black);
+        painter.setBrush(Qt::black);
+        painter.drawEllipse(transformPoint(global->robot), 8, 8);
         painter.setBrush(Qt::NoBrush);
-        painter.drawEllipse(transformPoint(global->enemies[i]), (int)global->robot_radius/2, (int)global->robot_radius/2);
-        if (global->showRobotArea) {
-          painter.setPen(QPen(Qt::red, 1, Qt::DashLine));
-          painter.drawEllipse(transformPoint(global->enemies[i]), (int)global->robot_radius, (int)global->robot_radius);
+        painter.drawEllipse(transformPoint(global->robot), (int)global->robot_radius/2, (int)global->robot_radius/2);
+        painter.drawLine(
+          transformPoint(global->robot),
+          transformPoint(global->robot +
+            (Vec(cos(global->direction[0]), -sin(global->direction[0])) * (global->robot_radius / 2))));
+        painter.setPen(global->connected[0] ? Qt::blue : Qt::black);
+        painter.drawText(transformPoint(global->robot + Vec(-25, 25)), "Robot 1");
+        // painter.drawText(transformPoint(global->robot + Vec(-25, 15)), "(" + QString::number(global->robot.x) + ", " + QString::number(global->robot.y) + ")");
+        painter.drawLine(transformPoint(global->robot), transformPoint(global->target));
+        painter.setBrush(Qt::NoBrush);
+        painter.setPen(Qt::blue);
+        painter.setBrush(Qt::blue);
+        painter.drawEllipse(transformPoint(global->ball), 8, 8);
+        // painter.drawText(transformPoint(global->ball + Vec(-25, 15)), "(" + QString::number(global->ball.x) + ", " + QString::number(global->ball.y) + ")");
+        for (size_t i = 0; i < global->enemies.size(); i++) {
+          painter.setPen(global->connected[i+1] ? Qt::blue : Qt::black);
+          painter.drawText(transformPoint(global->enemies[i] + Vec(-25, global->showRobotArea ? 45 : 25)), "Robot " + QString::number(i+2));
+          // painter.drawText(transformPoint(global->enemies[i] + Vec(-25, 15)), "(" + QString::number(global->enemies[i].x) + ", " + QString::number(global->enemies[i].y) + ")");
+          painter.setPen(Qt::red);
+          painter.setBrush(Qt::red);
+          painter.drawLine(
+            transformPoint(global->enemies[i]),
+            transformPoint(global->enemies[i] +
+              (Vec(cos(global->direction[i+1]), -sin(global->direction[i+1])) * (global->robot_radius / 2))));
+          if (isSelectEnemy && i == index_enemy_select) {
+            painter.setPen(Qt::darkRed);
+            painter.setBrush(Qt::darkRed);  
+          }
+          painter.drawEllipse(transformPoint(global->enemies[i]), 8, 8);
+          painter.setBrush(Qt::NoBrush);
+          painter.drawEllipse(transformPoint(global->enemies[i]), (int)global->robot_radius/2, (int)global->robot_radius/2);
+          if (global->showRobotArea) {
+            painter.setPen(QPen(Qt::red, 3, Qt::DashLine));
+            painter.drawEllipse(transformPoint(global->enemies[i]), (int)global->robot_radius, (int)global->robot_radius);
+          }
         }
       }
 
@@ -260,14 +262,14 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
       }
 
       if (global->showVisNode) {
-        painter.setPen(Qt::gray);
-        painter.setBrush(Qt::gray);
+        painter.setPen(Qt::black);
+        painter.setBrush(Qt::black);
         for (size_t i = 0; i < global->visited_node.size(); i++) {
             painter.drawEllipse(transformPoint(global->visited_node[i]), 2, 2);
         }
       }
       if (global->showAstarPath) {
-        painter.setPen(Qt::blue);
+        painter.setPen(QPen(Qt::blue, 3));
         painter.setBrush(Qt::blue);
         for (size_t i = 0; i < global->astar_path.size(); i++) {
             painter.drawEllipse(transformPoint(global->astar_path[i]), 2, 2);
@@ -307,7 +309,7 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
     }
 
     case 1: {
-      painter.fillRect(rect(), Qt::green);
+      painter.fillRect(rect(), QColor(89,192,52));
 
       painter.setPen(Qt::yellow);
       painter.setBrush(Qt::yellow);
@@ -334,7 +336,7 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
 
       painter.drawText(880, 615, "x: " + QString::number(mouseCurr.x()));
       painter.drawText(880, 630, "y: " + QString::number(mouseCurr.y()));
-      
+
       if (isMouseClicked && !isMouseInStart && !isMouseInTarget && !isMouseInNode) {
         painter.setPen(Qt::red);
         painter.setBrush(Qt::NoBrush);
@@ -342,6 +344,10 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
         painter.drawRect(mouseStart.x(), mouseStart.y(), delta.x(), delta.y());
       }
       QFont font;
+      // font.setPixelSize(50);
+      // painter.setFont(font);
+      // painter.setPen(Qt::black);
+      // painter.drawText(700, 200, QString::number(global->timer));
       font.setPixelSize(30);
       painter.setFont(font);
       for (auto &data : generator->openList) {
@@ -366,7 +372,7 @@ void RenderArea::paintEvent(QPaintEvent* paintEvent) {
     }
     
     case 2: {
-      painter.fillRect(rect(), Qt::green);
+      painter.fillRect(rect(), QColor(89,192,52));
 
       if (!global->isGenerate) {
         painter.setPen(Qt::yellow);

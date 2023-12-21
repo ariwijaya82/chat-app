@@ -81,8 +81,9 @@ class GlobalData {
     bool showAstarPath = true;
     bool showBezierPath = true;
     bool showFollowingPath = true;
+    bool showRobot = true;
     // timer data
-    int timer;
+    int timer = 0;
     int interval;
 
   private:

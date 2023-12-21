@@ -12,12 +12,15 @@ This project is about simulation humanoid robot soccer path planning with A* alg
 
 Requirement:
 - c++ compiler
-- Webots 2023a
-- Qt 6
+- Webots 2023b
 
-Add dynamic linking library
+Dependencies:
+- qt6
+- nlohmann json
+- websocket qt6
+- websocketpp
+
+Add global environment variable
 ```
 export WEBOTS_HOME=/usr/local/webots
-export RESOURCES_PATH=$WEBOTS_HOME/projects/robots/robotis/darwin-op
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RESOURCES_PATH/libraries/managers/:$WEBOTS_HOME/lib/controller/:$RESOURCES_PATH/libraries/robotis-op2/
 ```

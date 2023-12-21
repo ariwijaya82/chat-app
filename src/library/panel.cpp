@@ -242,8 +242,13 @@ void Panel::setView(int index, bool check) {
     case 4:
       global->showBezierPath = check;
       break;
+
     case 5:
       global->showFollowingPath = check;
+      break;
+
+    case 6:
+      global->showRobot = check;
       break;
   }
   renderArea->render();
@@ -273,6 +278,7 @@ void Panel::handleLeftButton() {
       if (renderArea->setPathNext(true)) {
         leftButton->setEnabled(false);
       }
+      global->timer += 1;
       heuristicCombo->setEnabled(false);
       nodeSpin->setEnabled(false);
       break;
@@ -324,6 +330,7 @@ void Panel::handleRightButton() {
       leftButton->setEnabled(true);
       heuristicCombo->setEnabled(true);
       nodeSpin->setEnabled(true);
+      global->timer = 0;
       break;
     }
   }
