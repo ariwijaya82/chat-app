@@ -1,6 +1,6 @@
 {
     "bezier_curvature": 5,
-    "heuristic_type": 1,
+    "heuristic_type": 0,
     "node_distance": 30.0,
     "path_number": 0,
     "robot_radius": 40.0,
