@@ -7,44 +7,48 @@
 #include <nlohmann/json.hpp>
 
 #include "utils.hpp"
-#include "point.hpp"
 
 using namespace std;
 using nlohmann::json;
 
-typedef struct Node {
-    double G;
-    double H;
-    Point pos;
-    Node* parent;
-} node;
+struct Node {
+    double G, H;
+    Vec coordinate;
+    Node *parent;
+
+    Node(Vec, Node* parent_=nullptr);
+    double getScore();
+};
 
 class PathGenerator {
     public:
-    PathGenerator();
-    // set value
-    void setRobotPos();
-    void setBallPos();
-    void setEnemyPos(int);
-    // process
-    void generatePath();
-    // get value
-    
+        PathGenerator(GlobalData* global_): global(global_) {}
+        ~PathGenerator(){}
+
+        void generatePath();
+        void generateSmoothPath(int);
+
+        double getAstarLength();
+        double getBezierLength();
+        int getTotalVisitedNode();
+
+        bool astar_find_next_node();
+        void astar_find_neighbors(bool ignore_head=false);
+        void process_path();
+        void modified_path(bool ignore_head=false);
+        void getBezierPoints(int, int);
+
+        vector<Node*> openList, closeList;
+        Node* current;
+
     private:
-    int node_distance;
-    int heuristic_type;
-    int bezier_curvature;
-    int robot_radius;
-    int screen_width;
-    int screen_height;
+        GlobalData* global;
 
-    Point ball;
-    Point robot;
-    vector<Point> enemies;
-    vector<vector<Point>> obstacles;
-
-    // helper function
-    void updateObstacles(int);
+        double heuristic(Vec, Vec, int);
+        bool detectCollision(Vec);
+        vector<Vec> getNeighbors(Vec, bool ignore_head=false);
+        Node* findNodeOnList(vector<Node*>&, Vec);
+        void releaseNodes(vector<Node*>&);
 };
 
 #endif

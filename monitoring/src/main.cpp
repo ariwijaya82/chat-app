@@ -1,12 +1,15 @@
 #include <QtWidgets/QApplication>
+#include <iostream>
 
-#include "window.hpp"
+#include "main_window.hpp"
+
+using namespace std;
 
 int main(int argc, char** argv) {
-    QApplication app(argc, argv);
-    
-    Window window;
-    window.show();
+  QApplication *app = new QApplication(argc, argv);
+  GlobalData *global = new GlobalData("../");
+  MainWindow *window = new MainWindow(global);
 
-    return app.exec();
+  window->show();
+  return app->exec();
 }

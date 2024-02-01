@@ -1,59 +1,65 @@
 #ifndef __PANEL_HPP__
 #define __PANEL_HPP__
 
-#include <vector>
-#include <map>
-#include <iostream>
-
+#include <QtCore/QTimer>
 #include <QtWidgets/QWidget>
 
+#include <QtWidgets/QVBoxLayout>
+#include <QtWidgets/QHBoxLayout>
+#include <QtWidgets/QFormLayout>
+
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QSlider>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QSpinBox>
-#include <QtWidgets/QPushButton>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QMessageBox>
+#include <QtWebSockets/QWebSocket>
 
-#include <QtWidgets/QVBoxLayout>
-#include <QtWidgets/QGridLayout>
-#include <QtWidgets/QFormLayout>
+#include <nlohmann/json.hpp>
 
-#include "utils.hpp"
+#include "render_area.hpp"
 
-using namespace std;
+using nlohmann::json;
 
 class Panel : public QWidget {
-    public:
-    Panel(QWidget* parent=nullptr);
-    ~Panel();
+  public:
+    Panel(GlobalData* global);
+    void setMode(int);
+    void setView(int, bool);
 
-    QCheckBox* getCheckBox();
-    QSlider* getSlider();
-    QComboBox* getComboBox(string);
-    QSpinBox* getSpinBox(string);
+  private:
+    RenderArea *renderArea;
+    GlobalData *global;
+    
+    QTimer *timer;
+    QPushButton *leftButton;
+    QPushButton *rightButton;
+    QPushButton *connectButton;
+    QPushButton *startButton;
+    QCheckBox *staticCheck;
+    QSlider *bezierSlider;
+    QComboBox *pathCombo;
+    QComboBox *heuristicCombo;
+    QSpinBox *nodeSpin;
+    QSpinBox *radiusSpin;
+    QSpinBox *bezierSpin;
+    QLabel *pathLabel;
+    QLabel *heuristicLabel;
+    QLabel *nodeLabel;
+    QLabel *radiusLabel;
+    QLabel *bezierSpinLabel;
+    QLabel *bezierSliderLabel;
+    QWebSocket *robotSocket[6];
 
-    void updateMode(int);
-    void resetPanel();
-
-    // public slots:
-    // void handleGenerateButton();
-    // void handleResetButton();
-    // void handleConnectButton();
-    // void handleSaveButton();
-
-    private:
-    int mode;
-
-    QVBoxLayout* panelLayout;
-    QGridLayout* buttonLayout;
-    QFormLayout* parameterLayout;
-
-    map<string, QPushButton*> button;
-    QCheckBox* check;
-    QSlider* slider;
-    map<string, QComboBox*> comboBox;
-    map<string, QSpinBox*> spinBox;
-    map<string, QLabel*> label;
+    void handleLeftButton();
+    void handleRightButton();
+    void handleConnectButton();
+    void handleStartButton();
+    
+    void handleTimer();
+    void handleSocketMessage(int, string);
 };
 
 #endif
